@@ -1,0 +1,170 @@
+// controllers/authController.js
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
+dotenv.config();
+
+// Tạo token
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+};
+
+// Đăng ký
+const registerUser = async (req, res) => {
+  const { fullName, email, password, phone, address, roleId, idDepartment, image } = req.body;
+
+  try {
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: 'Email đã tồn tại' });
+    }
+
+    const user = await User.create({
+      fullName,
+      email,
+      password,
+      phone,
+      address,
+      roleId,
+      idDepartment,
+      image
+    });
+
+    res.status(201).json({
+      _id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      roleId: user.roleId,
+      idDepartment: user.idDepartment,
+      image,
+      token: generateToken(user.id, user.roleId),
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+// Đăng nhập
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ message: 'Sai email hoặc mật khẩu' });
+    }
+
+    res.json({
+      _id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      roleId: user.roleId,
+      idDepartment: user.idDepartment,
+      image,
+      token: generateToken(user.id, user.roleId),
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+const updateUser = async (req, res) => {
+  try {
+      const { fullName, phone, address, roleId, idDepartment } = req.body;
+      const user = await User.findById(req.user.id); // Lấy id từ token
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Cập nhật thông tin
+      user.fullName = fullName || user.fullName;
+      user.phone = phone || user.phone;
+      user.address = address || user.address;
+      user.roleId = roleId || user.roleId;
+      user.idDepartment = idDepartment || user.idDepartment;
+
+      await user.save();
+      res.json({ message: "User updated successfully", user });
+  } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Đổi mật khẩu
+const changePassword = async (req, res) => {
+  try {
+      const { oldPassword, newPassword } = req.body;
+      const user = await User.findById(req.user.id);
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Kiểm tra mật khẩu cũ
+      const isMatch = await user.matchPassword(oldPassword);
+      if (!isMatch) return res.status(400).json({ message: "Old password is incorrect" });
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.updateOne({ _id: user.id }, { $set: { password: hashedPassword } });
+
+      res.json({ message: "Password updated successfully" });
+  } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Kiểm tra mật khẩu
+const checkPassword = async (req, res) => {
+  try {
+      const { password } = req.body;
+      const user = await User.findById(req.user.id);
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Kiểm tra mật khẩu
+      const isMatch = await user.matchPassword(password);
+      if (!isMatch) return res.status(400).json({ message: "false" });
+
+      res.json({ message: "true" });
+  } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Đăng xuất
+const logoutUser = (req, res) => {
+  res.json({ message: 'Đã đăng xuất thành công' });
+};
+
+// Lấy hồ sơ người dùng
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Người dùng không tồn tại' });
+    }
+
+    res.json({
+      _id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      roleId: user.roleId,
+      idDepartment: user.idDepartment,
+      image
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  logoutUser,
+  getProfile,
+  updateUser,
+  changePassword,
+  checkPassword
+};
