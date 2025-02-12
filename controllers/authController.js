@@ -188,6 +188,7 @@ const getAllUser = async (req, res) => {
     res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
+
 const getProfileByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
