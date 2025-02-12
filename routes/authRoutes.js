@@ -7,29 +7,21 @@ const {
   getProfile,
   updateUser,
   changePassword,
-  checkPassword
+  checkPassword,
+  getListUserByDepartmentID,
+  getAllUser,
+  getProfileByUserId
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
-
-// Đăng ký
 router.post('/register', registerUser);
-
-// Đăng nhập
 router.post('/login', loginUser);
-
-// Đăng xuất
 router.post('/logout', logoutUser);
-
-// Lấy thông tin hồ sơ (bảo vệ bởi middleware)
 router.get('/getProfile', protect(), getProfile);
-
 router.put('/update', protect(), updateUser);
-
-// Đổi mật khẩu
 router.put('/change-password', protect(), changePassword);
-
-// Kiểm tra mật khẩu
 router.post('/check-password', protect(), checkPassword);
-
+router.get('/department/:idDepartment', protect(), getListUserByDepartmentID);
+router.get('/', protect(), getAllUser);
+router.get('/:userId', protect(), getProfileByUserId);
 module.exports = router;

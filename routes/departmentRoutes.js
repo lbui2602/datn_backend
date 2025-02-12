@@ -6,13 +6,14 @@ const {
   updateDepartment,
   deleteDepartment
 } = require('../controllers/departmentController');
+const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.get('/', getDepartments);            // Lấy danh sách phòng ban
-router.get('/:id', getDepartmentById);      // Lấy chi tiết phòng ban
-router.post('/', createDepartment);         // Thêm phòng ban
-router.put('/:id', updateDepartment);       // Cập nhật phòng ban
-router.delete('/:id', deleteDepartment);    // Xóa phòng ban
+router.get('/',protect(), getDepartments);      
+router.get('/:id',protect(), getDepartmentById);      
+router.post('/',protect(), createDepartment);        
+router.put('/:id',protect(), updateDepartment);       
+router.delete('/:id',protect(), deleteDepartment);    
 
 module.exports = router;

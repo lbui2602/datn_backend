@@ -39,7 +39,7 @@ const registerUser = async (req, res) => {
       address: user.address,
       roleId: user.roleId,
       idDepartment: user.idDepartment,
-      image,
+      image: user.image,
       token: generateToken(user.id, user.roleId),
     });
   } catch (error) {
@@ -65,7 +65,7 @@ const loginUser = async (req, res) => {
       address: user.address,
       roleId: user.roleId,
       idDepartment: user.idDepartment,
-      image,
+      image: user.image,
       token: generateToken(user.id, user.roleId),
     });
   } catch (error) {
@@ -152,10 +152,63 @@ const getProfile = async (req, res) => {
       address: user.address,
       roleId: user.roleId,
       idDepartment: user.idDepartment,
-      image
+      image: user.image,
     });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+const getListUserByDepartmentID = async (req, res) => {
+  try {
+    const { idDepartment } = req.params;
+    const users = await User.find({ idDepartment });
+
+    if (!users.length) {
+      return res.status(404).json({ message: "Không có người dùng nào trong phòng ban này" });
+    }
+
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
+
+// Lấy toàn bộ danh sách người dùng
+const getAllUser = async (req, res) => {
+  try {
+    const users = await User.find();
+
+    if (!users.length) {
+      return res.status(404).json({ message: "Không có người dùng nào" });
+    }
+
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
+const getProfileByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
+    }
+
+    res.json({
+      _id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      roleId: user.roleId,
+      idDepartment: user.idDepartment,
+      image: user.image,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
 
@@ -166,5 +219,8 @@ module.exports = {
   getProfile,
   updateUser,
   changePassword,
-  checkPassword
+  checkPassword,
+  getListUserByDepartmentID,
+  getAllUser,
+  getProfileByUserId
 };

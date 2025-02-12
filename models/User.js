@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema({
   address: { type: String, required: true },
   roleId: { type: Number, required: true }, // 1: Giám đốc, 2: Trưởng phòng, 3: Nhân viên
   idDepartment: { type: String, required: true },
-  image: { type: String, required: true }
+  image: { type: String, required: false }
 }, {
   timestamps: true, // Thêm createdAt và updatedAt tự động
 });
