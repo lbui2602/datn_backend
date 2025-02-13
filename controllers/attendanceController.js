@@ -5,14 +5,17 @@ const WorkingDay = require('../models/WorkingDay');
 const recordAttendance = async (req, res) => {
   try {
     const { idUser, time, image } = req.body;
-    const date = new Date().toISOString().split('T')[0]; // Lấy ngày hiện tại (YYYY-MM-DD)
+    const date = getFormattedDate()
 
     // Tìm ngày làm việc hiện tại của user
     let workingDay = await WorkingDay.findOne({ idUser, date }).populate('attendances');
 
     if (!workingDay) {
-      workingDay = await WorkingDay.create({ idUser, date, attendances: [] });
+      workingDay = await WorkingDay.create({ idUser, date, attendances: [], totalHours: 0 });
     }
+
+    // Đảm bảo totalHours có giá trị hợp lệ
+    workingDay.totalHours = workingDay.totalHours || 0;
 
     // Kiểm tra lần chấm công trước đó (lần gần nhất)
     const lastAttendance = workingDay.attendances.length > 0 
@@ -32,10 +35,11 @@ const recordAttendance = async (req, res) => {
 
     // Nếu đã có ít nhất một cặp check_in - check_out, tính tổng số giờ làm
     if (type === 'check_out' && lastAttendance) {
-      const startTime = new Date(`${lastAttendance.date} ${lastAttendance.time}`);
-      const endTime = new Date(`${date} ${time}`);
-      const hoursWorked = (endTime - startTime) / (1000 * 60 * 60); // Đổi milliseconds sang giờ
-      workingDay.totalHours += hoursWorked;
+      const hoursWorked = calculateHours(lastAttendance.time,time)
+
+      if (!isNaN(hoursWorked) && hoursWorked > 0) {
+        workingDay.totalHours += hoursWorked;
+      }
     }
 
     await workingDay.save();
@@ -55,6 +59,26 @@ const getAttendanceByUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
+};
+function calculateHours(startTime, endTime) {
+  const toMinutes = (time) => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
+  };
+
+  const startMinutes = toMinutes(startTime);
+  const endMinutes = toMinutes(endTime);
+
+  const difference = (endMinutes-startMinutes) / 60;
+  return difference;
+}
+const getFormattedDate = () => {
+  const date = new Date();
+  const day = String(date.getDate()).padStart(2, '0'); // Lấy ngày và đảm bảo 2 chữ số
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Lấy tháng (0-based) và đảm bảo 2 chữ số
+  const year = date.getFullYear(); // Lấy năm
+
+  return `${day}-${month}-${year}`;
 };
 
 module.exports = { recordAttendance, getAttendanceByUser };

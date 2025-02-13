@@ -56,4 +56,26 @@ const calculateWorkingHours = async (req, res) => {
   }
 };
 
-module.exports = { getWorkingDaysByUser, getAllWorkingDays, calculateWorkingHours };
+const getTotalAttendance = async (req, res) => {
+  try {
+    const { idUser, date } = req.params;
+    
+    // Tìm ngày làm việc theo idUser và date
+    const workingDay = await WorkingDay.findOne({ idUser, date }).populate('attendances');
+
+    // Nếu không có dữ liệu, trả về 0
+    if (!workingDay) {
+      return res.json({ message: "No attendance records for this user on this date.", totalAttendance: 0 });
+    }
+
+    // Lấy tổng số lần chấm công
+    const totalAttendance = workingDay.attendances.length;
+
+    res.json({ message: "Total attendance count retrieved", totalAttendance });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+module.exports = { getWorkingDaysByUser, getAllWorkingDays, calculateWorkingHours, getTotalAttendance };
+
