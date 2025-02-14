@@ -12,9 +12,10 @@ const {
   getAllUser,
   getProfileByUserId
 } = require('../controllers/authController');
+const upload = require('../middleware/uploadMiddleware');
 const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
-router.post('/register', registerUser);
+router.post('/register', upload.single('image'), registerUser);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
 router.get('/getProfile', protect(), getProfile);

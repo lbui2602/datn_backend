@@ -5,6 +5,8 @@ const departmentRoutes = require('./routes/departmentRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const workingDayRoutes = require('./routes/workingDayRoutes');
 const dotenv = require('dotenv');
+const path = require('path');
+const cors = require('cors');
 
 dotenv.config();
 
@@ -19,6 +21,8 @@ mongoose.connect(process.env.MONGO_URI)
 
 
 // Routes
+app.use(cors());
+app.use('/uploads/avatar', express.static(path.join(__dirname, 'uploads/avatar')));
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/departments', departmentRoutes);

@@ -10,42 +10,48 @@ const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
-// Đăng ký
 const registerUser = async (req, res) => {
-  const { fullName, email, password, phone, address, roleId, idDepartment, image } = req.body;
-
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'Email đã tồn tại' });
-    }
+      console.log('Body:', req.body);
+      console.log('File:', req.file);
 
-    const user = await User.create({
-      fullName,
-      email,
-      password,
-      phone,
-      address,
-      roleId,
-      idDepartment,
-      image
-    });
+      const { fullName, email, password, phone, address, roleId, idDepartment } = req.body;
+      if (!email || !password || !fullName) {
+          return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin!' });
+      }
 
-    res.status(201).json({
-      _id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      address: user.address,
-      roleId: user.roleId,
-      idDepartment: user.idDepartment,
-      image: user.image,
-      token: generateToken(user.id, user.roleId),
-    });
+      // Kiểm tra email đã tồn tại chưa
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+          return res.status(400).json({ message: 'Email đã tồn tại!' });
+      }
+
+      // Mã hóa mật khẩu
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Đường dẫn ảnh nếu có
+      const avatarPath = req.file ? `/uploads/avatar/${req.file.filename}` : null;
+
+      // Tạo user mới
+      const newUser = new User({
+          fullName,
+          email,
+          password: hashedPassword,
+          phone,
+          address,
+          roleId,
+          idDepartment,
+          image: avatarPath
+      });
+
+      await newUser.save();
+      res.status(201).json({ message: 'Đăng ký thành công!', user: newUser });
+
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
+      res.status(500).json({ message: 'Lỗi server!', error: error.message });
   }
 };
+
 
 // Đăng nhập
 const loginUser = async (req, res) => {
