@@ -26,9 +26,6 @@ const registerUser = async (req, res) => {
           return res.status(400).json({ message: 'Email đã tồn tại!' });
       }
 
-      // Mã hóa mật khẩu
-      const hashedPassword = await bcrypt.hash(password, 10);
-
       // Đường dẫn ảnh nếu có
       const avatarPath = req.file ? `/uploads/avatar/${req.file.filename}` : null;
 
@@ -36,7 +33,7 @@ const registerUser = async (req, res) => {
       const newUser = new User({
           fullName,
           email,
-          password: hashedPassword,
+          password,
           phone,
           address,
           roleId,
