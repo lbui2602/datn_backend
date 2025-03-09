@@ -9,7 +9,7 @@ const recordAttendance = async (req, res) => {
     const date = getFormattedDate();
 
     if (!req.file) {
-      return res.status(400).json({ message: "Image file is required" });
+      return res.status(400).json({ message: "Vui lòng tải ảnh lên!",code:'0' });
     }
 
     const imagePath = req.file.path.replace(/\\/g, "/"); // Chuẩn hóa đường dẫn
@@ -48,9 +48,9 @@ const recordAttendance = async (req, res) => {
     }
 
     await workingDay.save();
-    res.status(201).json({ message: "Attendance recorded successfully", attendance, workingDay });
+    res.status(201).json({ message: "Attendance recorded successfully",code:'1', attendance, workingDay });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error", code:'0' });
   }
 };
 
@@ -60,9 +60,9 @@ const getAttendanceByUser = async (req, res) => {
     const { idUser } = req.params;
     const attendances = await Attendance.find({ idUser }).sort({ date: -1 });
 
-    res.json(attendances);
+    res.json({code:'1',attendances});
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error", code:'0' });
   }
 };
 

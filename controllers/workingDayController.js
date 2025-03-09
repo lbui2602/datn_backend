@@ -7,9 +7,9 @@ const getWorkingDaysByUser = async (req, res) => {
     const { idUser } = req.params;
     const workingDays = await WorkingDay.find({ idUser }).populate('attendances');
 
-    res.json(workingDays);
+    res.json({code:'1',workingDays});
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error",code:'0' });
   }
 };
 
@@ -18,9 +18,9 @@ const getAllWorkingDays = async (req, res) => {
   try {
     const workingDays = await WorkingDay.find().populate('idUser', 'name email').populate('attendances');
 
-    res.json(workingDays);
+    res.json({code:'1',workingDays});
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error",code:'0' });
   }
 };
 
@@ -50,9 +50,9 @@ const calculateWorkingHours = async (req, res) => {
     workingDay.totalHours = totalHours;
     await workingDay.save();
 
-    res.json({ message: "Total working hours updated", workingDay });
+    res.json({ message: "Total working hours updated",code:'1', workingDay });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error", code:'0' });
   }
 };
 
@@ -65,15 +65,15 @@ const getTotalAttendance = async (req, res) => {
 
     // Nếu không có dữ liệu, trả về 0
     if (!workingDay) {
-      return res.json({ message: "No attendance records for this user on this date.", totalAttendance: 0 });
+      return res.json({ message: "No attendance records for this user on this date.",code:'1', totalAttendance: 0 });
     }
 
     // Lấy tổng số lần chấm công
     const totalAttendance = workingDay.attendances.length;
 
-    res.json({ message: "Total attendance count retrieved", totalAttendance });
+    res.json({ message: "Total attendance count retrieved",code:'1', totalAttendance });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error",code:'0' });
   }
 };
 
