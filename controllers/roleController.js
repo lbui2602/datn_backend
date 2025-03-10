@@ -1,0 +1,89 @@
+const Role = require('../models/Role');
+
+// Tạo role mới
+const createRole = async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: 'Tên vai trò không được để trống' });
+    }
+
+    const newRole = new Role({ name });
+    await newRole.save();
+
+    res.status(201).json({ message: 'Tạo vai trò thành công', role: newRole });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+// Lấy danh sách tất cả roles
+const getAllRoles = async (req, res) => {
+  try {
+    const roles = await Role.find();
+    res.json({message:'Lấy role thành công',code:'1',roles});
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
+  }
+};
+
+// Lấy role theo ID
+const getRoleById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const role = await Role.findById(id);
+
+    if (!role) {
+      return res.status(404).json({ message: 'Không tìm thấy vai trò', code:'0' });
+    }
+
+    res.json({message:'Lấy role thành công',code:'1',role});
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', code:'0' });
+  }
+};
+
+// Cập nhật role
+const updateRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    const role = await Role.findById(id);
+    if (!role) {
+      return res.status(404).json({ message: 'Không tìm thấy vai trò' });
+    }
+
+    role.name = name || role.name;
+    await role.save();
+
+    res.json({ message: 'Cập nhật vai trò thành công', role });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+// Xóa role
+const deleteRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const role = await Role.findById(id);
+
+    if (!role) {
+      return res.status(404).json({ message: 'Không tìm thấy vai trò' });
+    }
+
+    await role.deleteOne();
+    res.json({ message: 'Xóa vai trò thành công' });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+module.exports = {
+  createRole,
+  getAllRoles,
+  getRoleById,
+  updateRole,
+  deleteRole
+};

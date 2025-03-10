@@ -4,6 +4,8 @@ const authRoutes = require('./routes/authRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const workingDayRoutes = require('./routes/workingDayRoutes');
+const roleRoutes = require('./routes/roleRoutes');
+
 const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
@@ -28,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/working-days', workingDayRoutes);
+app.use('/api/roles', roleRoutes);
 
 // Lắng nghe server
 app.listen(port, () => {

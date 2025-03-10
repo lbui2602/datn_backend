@@ -32,13 +32,10 @@ const recordAttendance = async (req, res) => {
     if (lastAttendance && lastAttendance.type === 'check_in') {
       type = 'check_out';
     }
-
     // Tạo bản ghi chấm công mới
     const attendance = await Attendance.create({ idUser, date, time, type, image: imagePath });
-
     // Lưu vào danh sách chấm công
     workingDay.attendances.push(attendance._id);
-
     // Tính tổng số giờ làm
     if (type === 'check_out' && lastAttendance) {
       const hoursWorked = calculateHours(lastAttendance.time, time);
@@ -46,7 +43,6 @@ const recordAttendance = async (req, res) => {
         workingDay.totalHours += hoursWorked;
       }
     }
-
     await workingDay.save();
     res.status(201).json({ message: "Attendance recorded successfully",code:'1', attendance, workingDay });
   } catch (error) {
