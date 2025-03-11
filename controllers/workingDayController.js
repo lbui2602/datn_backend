@@ -9,7 +9,7 @@ const getWorkingDaysByUser = async (req, res) => {
 
     res.json({code:'1',workingDays});
   } catch (error) {
-    res.status(500).json({ message: "Server error",code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message,code:'0' });
   }
 };
 
@@ -20,7 +20,7 @@ const getAllWorkingDays = async (req, res) => {
 
     res.json({code:'1',workingDays});
   } catch (error) {
-    res.status(500).json({ message: "Server error",code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message,code:'0' });
   }
 };
 
@@ -31,7 +31,7 @@ const calculateWorkingHours = async (req, res) => {
     const workingDay = await WorkingDay.findOne({ idUser, date }).populate('attendances');
 
     if (!workingDay) {
-      return res.status(404).json({ message: "No working day found for this user on this date." });
+      return res.status(404).json({ message: "No working day found for this user on this date.",code:"0" });
     }
 
     let totalHours = 0;
@@ -42,7 +42,7 @@ const calculateWorkingHours = async (req, res) => {
         lastCheckIn = new Date(`${attendance.date} ${attendance.time}`);
       } else if (attendance.type === 'check_out' && lastCheckIn) {
         const checkOutTime = new Date(`${attendance.date} ${attendance.time}`);
-        totalHours += (checkOutTime - lastCheckIn) / (1000 * 60 * 60); // Chuyển milliseconds sang giờ
+        totalHours += (checkOutTime - lastCheckIn) / (1000 * 60 * 60);
         lastCheckIn = null;
       }
     });
@@ -52,7 +52,7 @@ const calculateWorkingHours = async (req, res) => {
 
     res.json({ message: "Total working hours updated",code:'1', workingDay });
   } catch (error) {
-    res.status(500).json({ message: "Server error", code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
   }
 };
 
@@ -65,7 +65,7 @@ const getTotalAttendance = async (req, res) => {
 
     // Nếu không có dữ liệu, trả về 0
     if (!workingDay) {
-      return res.json({ message: "No attendance records for this user on this date.",code:'1', totalAttendance: 0 });
+      return res.json({ message: "Không có bản ghi nào trong ngày hôm nay.",code:'1', totalAttendance: 0 });
     }
 
     // Lấy tổng số lần chấm công
@@ -73,7 +73,7 @@ const getTotalAttendance = async (req, res) => {
 
     res.json({ message: "Total attendance count retrieved",code:'1', totalAttendance });
   } catch (error) {
-    res.status(500).json({ message: "Server error",code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message,code:'0' });
   }
 };
 

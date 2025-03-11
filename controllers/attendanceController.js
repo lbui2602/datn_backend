@@ -46,7 +46,7 @@ const recordAttendance = async (req, res) => {
     await workingDay.save();
     res.status(201).json({ message: "Attendance recorded successfully",code:'1', attendance, workingDay });
   } catch (error) {
-    res.status(500).json({ message: "Server error", code:'0' });
+    res.status(500).json({ message: "Server error: "+error.message, code:'0' });
   }
 };
 
@@ -58,7 +58,7 @@ const getAttendanceByUser = async (req, res) => {
 
     res.json({code:'1',attendances});
   } catch (error) {
-    res.status(500).json({ message: "Server error", code:'0' });
+    res.status(500).json({ message: "Server error: "+error.message, code:'0' });
   }
 };
 

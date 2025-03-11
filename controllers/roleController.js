@@ -11,9 +11,9 @@ const createRole = async (req, res) => {
     const newRole = new Role({ name });
     await newRole.save();
 
-    res.status(201).json({ message: 'Tạo vai trò thành công', role: newRole });
+    res.status(201).json({ message: 'Tạo vai trò thành công', role: newRole,code:"1"});
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
+    res.status(500).json({ message: 'Server error: '+error.message,code:"0" });
   }
 };
 
@@ -39,7 +39,7 @@ const getRoleById = async (req, res) => {
 
     res.json({message:'Lấy role thành công',code:'1',role});
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
   }
 };
 
@@ -51,15 +51,15 @@ const updateRole = async (req, res) => {
 
     const role = await Role.findById(id);
     if (!role) {
-      return res.status(404).json({ message: 'Không tìm thấy vai trò' });
+      return res.status(404).json({ message: 'Không tìm thấy role',code:"0" });
     }
 
     role.name = name || role.name;
     await role.save();
 
-    res.json({ message: 'Cập nhật vai trò thành công', role });
+    res.json({ message: 'Cập nhật role thành công', role ,code:"1"});
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
+    res.status(500).json({ message: 'Server error: '+error.message,code:"0" });
   }
 };
 
@@ -70,13 +70,13 @@ const deleteRole = async (req, res) => {
     const role = await Role.findById(id);
 
     if (!role) {
-      return res.status(404).json({ message: 'Không tìm thấy vai trò' });
+      return res.status(404).json({ message: 'Không tìm thấy vai trò',code:"0" });
     }
 
     await role.deleteOne();
-    res.json({ message: 'Xóa vai trò thành công' });
+    res.json({ message: 'Xóa vai trò thành công',code:"1"});
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
+    res.status(500).json({ message: 'Server error: '+error.message,code:"0"});
   }
 };
 

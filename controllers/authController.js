@@ -13,7 +13,7 @@ const generateToken = (id, role) => {
 const registerUser = async (req, res) => {
   try {
       const { fullName, email, password, phone, address, roleId, idDepartment } = req.body;
-      if (!email || !password || !fullName) {
+      if (!email || !password || !fullName || !address || !phone) {
           return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin!',code:'0' });
       }
 
@@ -42,7 +42,7 @@ const registerUser = async (req, res) => {
       res.status(201).json({ message: 'Đăng ký thành công!',code:"1", user: newUser });
 
   } catch (error) {
-      res.status(500).json({ message: 'Lỗi server!',code:"0", error: error.message });
+      res.status(500).json({ message:"Server error: "+error.message,code:"0"});
   }
 };
 
@@ -53,8 +53,10 @@ const loginUser = async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-    if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ message: 'Sai email hoặc mật khẩu',code:"0" });
+    if (!user) {
+      return res.status(401).json({ message: 'Email này không tồn tại!',code:"0" });
+    }else if( !(await user.matchPassword(password))){
+      return res.status(401).json({ message: 'Sai mật khẩu!',code:"0" });
     }
 
     res.json({
@@ -71,7 +73,7 @@ const loginUser = async (req, res) => {
       token: generateToken(user.id, user.roleId),
     });
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server',code:"0" });
+    res.status(500).json({ message: 'Server error: '+error.message,code:"0" });
   }
 };
 const updateUser = async (req, res) => {
@@ -91,7 +93,7 @@ const updateUser = async (req, res) => {
       await user.save();
       res.json({ message: "Cập nhật thông tin thành công",code:'1', user });
   } catch (error) {
-      res.status(500).json({ message: "Server error", code:'0' });
+      res.status(500).json({ message: "Server error: "+error.message, code:'0' });
   }
 };
 
@@ -111,7 +113,7 @@ const changePassword = async (req, res) => {
 
       res.json({ message: "Thay đổi mật khẩu thành công",code:'1' });
   } catch (error) {
-      res.status(500).json({ message: "Server error", code:'0' });
+      res.status(500).json({ message: "Server error: "+error.message, code:'0' });
   }
 };
 
@@ -129,7 +131,7 @@ const checkPassword = async (req, res) => {
 
       res.json({ message: "true" });
   } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Server error: "+error.message });
   }
 };
 
@@ -188,7 +190,7 @@ const getAllUser = async (req, res) => {
 
     res.json({code:'1',users});
   } catch (error) {
-    res.status(500).json({ message: "Lỗi server", code:'0' });
+    res.status(500).json({ message: "Server error: "+error.message, code:'0' });
   }
 };
 
@@ -213,7 +215,7 @@ const getProfileByUserId = async (req, res) => {
       image: user.image,
     });
   } catch (error) {
-    res.status(500).json({ message: "Lỗi server", code:'0'});
+    res.status(500).json({ message: "Server error: "+error.message, code:'0'});
   }
 };
 
@@ -235,10 +237,10 @@ const uploadAvatar = async (req, res) => {
     user.image = avatarPath;
 
     await user.save();
-    res.json({ message: "Ảnh đại diện cập nhật thành công",code:'0', image: avatarPath });
+    res.json({ message: "Ảnh đại diện cập nhật thành công",code:'1', image: avatarPath });
 
   } catch (error) {
-    res.status(500).json({ message: "Lỗi server", code:'0' });
+    res.status(500).json({ message: "Server error: "+error.message, code:'0' });
   }
 };
 

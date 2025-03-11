@@ -6,7 +6,7 @@ const getDepartments = async (req, res) => {
     const departments = await Department.find();
     res.json({code:'1',departments});
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
   }
 };
 
@@ -17,7 +17,7 @@ const getDepartmentById = async (req, res) => {
     if (!department) return res.status(404).json({ message: 'Phòng ban không tồn tại',code:'0' });
     res.json({code:'1',department});
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
   }
 };
 
@@ -32,7 +32,7 @@ const createDepartment = async (req, res) => {
     const department = await Department.create({ name });
     res.status(201).json({code:'1',department});
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
   }
 };
 
@@ -49,7 +49,7 @@ const updateDepartment = async (req, res) => {
 
     res.json({ message: 'Cập nhật thành công',code:'1', department });
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
   }
 };
 
@@ -63,7 +63,7 @@ const deleteDepartment = async (req, res) => {
     await department.deleteOne();
     res.json({ message: 'Xóa phòng ban thành công',code:'1' });
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', code:'0' });
+    res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
   }
 };
 
