@@ -14,7 +14,7 @@ const registerUser = async (req, res) => {
   try {
       const { fullName, email, password, phone, address, roleId, idDepartment } = req.body;
       if (!email || !password || !fullName) {
-          return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin!',code:'00' });
+          return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin!',code:'0' });
       }
 
       // Kiểm tra email đã tồn tại chưa

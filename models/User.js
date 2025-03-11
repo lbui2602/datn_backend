@@ -7,7 +7,7 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   phone: { type: String, required: true },
   address: { type: String, required: true },
-  roleId: { type: Number, required: true }, // 1: Giám đốc, 2: Trưởng phòng, 3: Nhân viên
+  roleId: { type: String, required: true }, // 1: Giám đốc, 2: Trưởng phòng, 3: Nhân viên
   idDepartment: { type: String, required: true },
   image: { type: String, required: false }
 }, {
