@@ -7,11 +7,13 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   phone: { type: String, required: true },
   address: { type: String, required: true },
-  roleId: { type: String, required: true }, // 1: Giám đốc, 2: Trưởng phòng, 3: Nhân viên
+  roleId: { type: String, required: true },
   idDepartment: { type: String, required: true },
-  image: { type: String, required: false }
+  image: { type: String, required: false },
+  face_token: { type: String, required: false },
+  status : {type: Boolean,require : true}
 }, {
-  timestamps: true, // Thêm createdAt và updatedAt tự động
+  timestamps: true, 
 });
 
 // Hash mật khẩu trước khi lưu

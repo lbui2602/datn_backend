@@ -6,8 +6,8 @@ const bcrypt = require('bcryptjs');
 dotenv.config();
 
 // Tạo token
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const generateToken = (id, roleId) => {
+  return jwt.sign({ id, roleId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
 const registerUser = async (req, res) => {
@@ -22,11 +22,6 @@ const registerUser = async (req, res) => {
       if (existingUser) {
           return res.status(400).json({ message: 'Email đã tồn tại!',code:'0'});
       }
-
-      // Đường dẫn ảnh nếu có
-      const avatarPath = req.file ? `/uploads/avatar/${req.file.filename}` : null;
-
-      // Tạo user mới
       const newUser = new User({
           fullName,
           email,
@@ -35,7 +30,9 @@ const registerUser = async (req, res) => {
           address,
           roleId,
           idDepartment,
-          image: avatarPath
+          image : "",
+          face_token : "",
+          status : false
       });
 
       await newUser.save();
@@ -45,7 +42,24 @@ const registerUser = async (req, res) => {
       res.status(500).json({ message:"Server error: "+error.message,code:"0"});
   }
 };
+const updateFaceToken = async (req, res) => {
+  try {
+    const {userId,faceToken } = req.body;
+    const user = await User.findById(userId);
 
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại", code: '0' });
+    }
+
+    // Cập nhật face_token
+    user.face_token = faceToken;
+    await user.save();
+
+    res.json({ message: "Cập nhật face_token thành công", code: '1', face_token: user.face_token });
+  } catch (error) {
+    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
+  }
+};
 
 // Đăng nhập
 const loginUser = async (req, res) => {
@@ -70,6 +84,7 @@ const loginUser = async (req, res) => {
       roleId: user.roleId,
       idDepartment: user.idDepartment,
       image: user.image,
+      face_token : user.face_token,
       token: generateToken(user.id, user.roleId),
     });
   } catch (error) {
@@ -221,7 +236,7 @@ const getProfileByUserId = async (req, res) => {
 
 const uploadAvatar = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.body;
     const user = await User.findById(userId);
 
     if (!user) {
@@ -243,6 +258,28 @@ const uploadAvatar = async (req, res) => {
     res.status(500).json({ message: "Server error: "+error.message, code:'0' });
   }
 };
+const searchUserByFaceToken = async (req, res) => {
+  try {
+    const { face_token } = req.body;
+    if (!face_token) {
+      return res.status(400).json({ message: "Thiếu face_token", code: '0' });
+    }
+
+    const user = await User.findOne({ face_token });
+
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng", code: '0' });
+    }
+
+    res.json({
+      message: "Tìm thấy người dùng",
+      code: '1',
+      user: user
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server: " + error.message, code: '0' });
+  }
+};
 
 module.exports = {
   registerUser,
@@ -255,5 +292,7 @@ module.exports = {
   getListUserByDepartmentID,
   getAllUser,
   getProfileByUserId,
-  uploadAvatar
+  uploadAvatar,
+  updateFaceToken,
+  searchUserByFaceToken
 };

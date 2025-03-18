@@ -11,13 +11,15 @@ const {
   getListUserByDepartmentID,
   getAllUser,
   getProfileByUserId,
-  uploadAvatar
+  uploadAvatar,
+  updateFaceToken,
+  searchUserByFaceToken
 } = require('../controllers/authController');
 const upload = require('../middleware/uploadAvatarMiddleware');
 const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
 router.post('/register', registerUser);
-router.post('/uploadAvatar/:userId', protect(), upload.single('image'), uploadAvatar);
+router.post('/uploadAvatar', upload.single('image_file'), uploadAvatar);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
 router.get('/getProfile', protect(), getProfile);
@@ -26,5 +28,7 @@ router.put('/change-password', protect(), changePassword);
 router.post('/check-password', protect(), checkPassword);
 router.get('/department/:idDepartment', protect(), getListUserByDepartmentID);
 router.get('/', protect(), getAllUser);
+router.put('/updateFaceToken', updateFaceToken);
 router.get('/:userId', protect(), getProfileByUserId);
+router.post('/search_user_by_face_token', searchUserByFaceToken);
 module.exports = router;

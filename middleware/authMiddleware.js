@@ -17,8 +17,8 @@ const protect = (roles = []) => {
       console.log('Token decoded:', decoded); // Debug: Token được giải mã thành công
       req.user = decoded;
 
-      if (roles.length && !roles.includes(req.user.role)) {
-        console.log('Unauthorized role:', req.user.role); // Debug: Role không hợp lệ
+      if (roles.length && !roles.includes(req.user.roleId)) {
+        console.log('Unauthorized role:', req.user.roleId); // Debug: Role không hợp lệ
         return res.status(403).json({ message: 'Không có quyền truy cập' });
       }
 
