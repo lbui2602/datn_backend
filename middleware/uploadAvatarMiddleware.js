@@ -14,7 +14,9 @@ const storage = multer.diskStorage({
         cb(null, uploadDir); // Thư mục lưu avatar
     },
     filename: function (req, file, cb) {
-        cb(null, file.originalname); // Giữ nguyên tên file gốc
+        const { userId } = req.body;
+        const filename = `${userId}${path.extname(file.originalname)}`;
+        cb(null, filename);
     }
 });
 

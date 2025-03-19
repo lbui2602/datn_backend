@@ -3,12 +3,17 @@ const Role = require('../models/Role');
 // Tạo role mới
 const createRole = async (req, res) => {
   try {
-    const { name } = req.body;
-    if (!name) {
-      return res.status(400).json({ message: 'Tên vai trò không được để trống' });
+    const { _id,name } = req.body;
+    const existingRole = await Role.findById(_id);
+    if (existingRole) {
+      return res.status(400).json({ message: 'Id Role đã tồn tại!',code:"0" });
     }
 
-    const newRole = new Role({ name });
+    if (!name) {
+      return res.status(400).json({ message: 'Tên vai trò không được để trống',code:"0" });
+    }
+
+    const newRole = new Role({ _id,name });
     await newRole.save();
 
     res.status(201).json({ message: 'Tạo vai trò thành công', role: newRole,code:"1"});

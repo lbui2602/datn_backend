@@ -5,7 +5,7 @@ const upload = require('../middleware/uploadAttendanceMiddleware');
 
 const router = express.Router();
 
-router.post('/', protect(),upload.single('image'), recordAttendance);
+router.post('/', protect(),upload.single('image_file'), recordAttendance);
 router.get('/:idUser', protect(), getAttendanceByUser);
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const workingDaySchema = new mongoose.Schema({
-  idUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   date: { type: String, required: true },
   attendances: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Attendance' }], 
   totalHours: { type: Number, default: 0 },

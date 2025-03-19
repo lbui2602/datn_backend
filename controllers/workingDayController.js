@@ -4,8 +4,8 @@ const Attendance = require('../models/Attendance');
 // Lấy danh sách ngày làm việc của một nhân viên
 const getWorkingDaysByUser = async (req, res) => {
   try {
-    const { idUser } = req.params;
-    const workingDays = await WorkingDay.find({ idUser }).populate('attendances');
+    const { userId } = req.params;
+    const workingDays = await WorkingDay.find({ userId }).populate('attendances');
 
     res.json({code:'1',workingDays});
   } catch (error) {
@@ -16,7 +16,7 @@ const getWorkingDaysByUser = async (req, res) => {
 // Lấy tất cả ngày làm việc của tất cả nhân viên
 const getAllWorkingDays = async (req, res) => {
   try {
-    const workingDays = await WorkingDay.find().populate('idUser', 'name email').populate('attendances');
+    const workingDays = await WorkingDay.find().populate('userId', 'name email').populate('attendances');
 
     res.json({code:'1',workingDays});
   } catch (error) {
@@ -27,8 +27,8 @@ const getAllWorkingDays = async (req, res) => {
 // Tính tổng số giờ làm việc trong một ngày
 const calculateWorkingHours = async (req, res) => {
   try {
-    const { idUser, date } = req.params;
-    const workingDay = await WorkingDay.findOne({ idUser, date }).populate('attendances');
+    const { userId, date } = req.params;
+    const workingDay = await WorkingDay.findOne({ userId, date }).populate('attendances');
 
     if (!workingDay) {
       return res.status(404).json({ message: "No working day found for this user on this date.",code:"0" });
@@ -58,10 +58,10 @@ const calculateWorkingHours = async (req, res) => {
 
 const getTotalAttendance = async (req, res) => {
   try {
-    const { idUser, date } = req.params;
+    const { userId, date } = req.params;
     
     // Tìm ngày làm việc theo idUser và date
-    const workingDay = await WorkingDay.findOne({ idUser, date }).populate('attendances');
+    const workingDay = await WorkingDay.findOne({ userId, date }).populate('attendances');
 
     // Nếu không có dữ liệu, trả về 0
     if (!workingDay) {
