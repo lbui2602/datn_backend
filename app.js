@@ -25,7 +25,7 @@ mongoose.connect(process.env.MONGO_URI)
 // Routes
 app.use(cors());
 app.use('/uploads/avatar', express.static(path.join(__dirname, 'uploads/avatar')));
-app.use('/uploads/attendances', express.static(path.join(__dirname, 'uploads/attendances')));
+app.use('/uploads/attendance', express.static(path.join(__dirname, 'uploads/attendance')));
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/departments', departmentRoutes);

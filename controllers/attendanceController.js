@@ -11,7 +11,7 @@ const recordAttendance = async (req, res) => {
       return res.status(400).json({ message: "Vui lòng tải ảnh lên!", code: '0' });
     }
 
-    const imagePath = `/uploads/attendances/${req.file.filename}`;
+    const imagePath = `/uploads/attendance/${req.file.filename}`;
 
     // Tìm ngày làm việc hiện tại của user
     let workingDay = await WorkingDay.findOne({ userId, date }).populate('attendances');
@@ -87,7 +87,26 @@ function calculateHours(startTime, endTime) {
   const startMinutes = toMinutes(startTime);
   const endMinutes = toMinutes(endTime);
 
-  return (endMinutes - startMinutes) / 60;
+  return ((endMinutes - startMinutes) / 60).toFixed(2);
 }
 
-module.exports = { recordAttendance, getAttendanceByUser };
+const getAttendanceByUserIdAndDate = async (req, res) => {
+  try {
+    const { userId, date } = req.body;
+    let workingDay = await WorkingDay.findOne({ userId, date }).populate('attendances');
+
+    if (!workingDay) {
+      return res.status(404).json({ message: "Không có dữ liệu chấm công cho ngày này!", code: '0' });
+    }
+    res.json({
+      code: '1',
+      attendances: workingDay.attendances,
+      totalHours: workingDay.totalHours
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
+  }
+};
+
+
+module.exports = { recordAttendance, getAttendanceByUser,getAttendanceByUserIdAndDate };
