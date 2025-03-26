@@ -20,7 +20,7 @@ const recordAttendance = async (req, res) => {
       workingDay = await WorkingDay.create({ userId, date, attendances: [], totalHours: 0 });
     }
 
-    workingDay.totalHours = workingDay.totalHours || 0;
+    workingDay.totalHours = Number(workingDay.totalHours) || 0; // Ép kiểu đảm bảo luôn là số
 
     // Kiểm tra lần chấm công trước đó
     const lastAttendance = workingDay.attendances.length > 0
@@ -42,7 +42,7 @@ const recordAttendance = async (req, res) => {
     if (type === 'check_out' && lastAttendance) {
       const hoursWorked = calculateHours(lastAttendance.time, time);
       if (!isNaN(hoursWorked) && hoursWorked > 0) {
-        workingDay.totalHours += hoursWorked;
+        workingDay.totalHours = Number((workingDay.totalHours + hoursWorked).toFixed(2)); // Ép kiểu về số
       }
     }
 
@@ -62,6 +62,7 @@ const recordAttendance = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("Lỗi server:", error);
     res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
@@ -72,24 +73,32 @@ const getAttendanceByUser = async (req, res) => {
     const { userId } = req.params;
     const attendances = await Attendance.find({ userId }).sort({ date: -1 });
 
-    res.json({code:'1',attendances});
+    res.json({ code: '1', attendances });
   } catch (error) {
-    res.status(500).json({ message: "Server error: "+error.message, code:'0' });
+    console.error("Lỗi server:", error);
+    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
 
+// Hàm tính số giờ làm
 function calculateHours(startTime, endTime) {
   const toMinutes = (time) => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
+    if (!time || !/^\d{2}:\d{2}$/.test(time)) return NaN; // Kiểm tra định dạng hh:mm
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
   };
 
   const startMinutes = toMinutes(startTime);
   const endMinutes = toMinutes(endTime);
 
-  return ((endMinutes - startMinutes) / 60).toFixed(2);
+  if (isNaN(startMinutes) || isNaN(endMinutes) || endMinutes <= startMinutes) {
+    return 0; // Trả về 0 nếu giá trị không hợp lệ
+  }
+
+  return Number(((endMinutes - startMinutes) / 60).toFixed(2)); // Ép kiểu về số
 }
 
+// Lấy chấm công theo user và ngày
 const getAttendanceByUserIdAndDate = async (req, res) => {
   try {
     const { userId, date } = req.body;
@@ -101,12 +110,12 @@ const getAttendanceByUserIdAndDate = async (req, res) => {
     res.json({
       code: '1',
       attendances: workingDay.attendances,
-      totalHours: workingDay.totalHours
+      totalHours: Number(workingDay.totalHours) || 0
     });
   } catch (error) {
+    console.error("Lỗi server:", error);
     res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
 
-
-module.exports = { recordAttendance, getAttendanceByUser,getAttendanceByUserIdAndDate };
+module.exports = { recordAttendance, getAttendanceByUser, getAttendanceByUserIdAndDate };

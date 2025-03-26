@@ -158,21 +158,31 @@ const logoutUser = (req, res) => {
 // Lấy hồ sơ người dùng
 const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id)
+      .populate('roleId', 'name') // Lấy tên role từ bảng Role
+      .populate('idDepartment', 'name'); // Lấy tên department từ bảng Department
+
     if (!user) {
-      return res.status(404).json({ message: 'Người dùng không tồn tại',code:'0' });
+      return res.status(404).json({ message: 'Người dùng không tồn tại', code: '0' });
     }
 
     res.json({
-      code:'1',
-      _id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      address: user.address,
-      roleId: user.roleId,
-      idDepartment: user.idDepartment,
-      image: user.image,
+      code: '1',
+      message: 'Lấy thông tin người dùng thành công',
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        role: user.roleId ? user.roleId.name : null, // Đổi roleId thành role name
+        department: user.idDepartment ? user.idDepartment.name : null, // Đổi idDepartment thành department name
+        image: user.image,
+        face_token: user.face_token,
+        status: user.status,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
     });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
@@ -220,14 +230,8 @@ const getProfileByUserId = async (req, res) => {
 
     res.json({
       code:'1',
-      _id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      address: user.address,
-      roleId: user.roleId,
-      idDepartment: user.idDepartment,
-      image: user.image,
+      message:'Lấy thông tin người dùng thành công',
+      user:user
     });
   } catch (error) {
     res.status(500).json({ message: "Server error: "+error.message, code:'0'});
