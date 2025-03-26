@@ -24,12 +24,12 @@ const getDepartmentById = async (req, res) => {
 // Thêm phòng ban
 const createDepartment = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { _id,name } = req.body;
     // Kiểm tra phòng ban đã tồn tại chưa
     const departmentExists = await Department.findOne({ name });
     if (departmentExists) return res.status(400).json({ message: 'Phòng ban đã tồn tại',code:'0' });
 
-    const department = await Department.create({ name });
+    const department = await Department.create({ _id,name });
     res.status(201).json({code:'1',department});
   } catch (error) {
     res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
