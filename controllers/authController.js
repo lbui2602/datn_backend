@@ -192,46 +192,97 @@ const getProfile = async (req, res) => {
 const getListUserByDepartmentID = async (req, res) => {
   try {
     const { idDepartment } = req.params;
-    const users = await User.find({ idDepartment });
+    const users = await User.find({ idDepartment })
+      .populate('roleId', 'name') 
+      .populate('idDepartment', 'name');
 
     if (!users.length) {
-      return res.status(404).json({ message: "Không có người dùng nào trong phòng ban này",code:'0' });
+      return res.status(404).json({ message: "Không có người dùng nào trong phòng ban này", code: '0' });
     }
 
-    res.json({code:'1',users});
+    const formattedUsers = users.map(user => ({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      role: user.roleId ? user.roleId.name : null,
+      department: user.idDepartment ? user.idDepartment.name : null,
+      image: user.image,
+      face_token: user.face_token,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    }));
+
+    res.json({ code: '1', users: formattedUsers });
   } catch (error) {
     res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
 
+
 // Lấy toàn bộ danh sách người dùng
 const getAllUser = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find()
+      .populate('roleId', 'name')
+      .populate('idDepartment', 'name');
 
     if (!users.length) {
-      return res.status(404).json({ message: "Không có người dùng nào",code:'0' });
+      return res.status(404).json({ message: "Không có người dùng nào", code: '0' });
     }
 
-    res.json({code:'1',users});
+    const formattedUsers = users.map(user => ({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      role: user.roleId ? user.roleId.name : null,
+      department: user.idDepartment ? user.idDepartment.name : null,
+      image: user.image,
+      face_token: user.face_token,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    }));
+
+    res.json({ code: '1', users: formattedUsers });
   } catch (error) {
-    res.status(500).json({ message: "Server error: "+error.message, code:'0' });
+    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
+
 
 const getProfileByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
+      .populate('roleId', 'name') // Lấy tên role từ bảng Role
+      .populate('idDepartment', 'name'); // Lấy tên department từ bảng Department
 
     if (!user) {
-      return res.status(404).json({ message: "Người dùng không tồn tại",code:'0' });
+      return res.status(404).json({ message: 'Người dùng không tồn tại', code: '0' });
     }
 
     res.json({
-      code:'1',
-      message:'Lấy thông tin người dùng thành công',
-      user:user
+      code: '1',
+      message: 'Lấy thông tin người dùng thành công',
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        role: user.roleId ? user.roleId.name : null, 
+        department: user.idDepartment ? user.idDepartment.name : null, 
+        image: user.image,
+        face_token: user.face_token,
+        status: user.status,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
     });
   } catch (error) {
     res.status(500).json({ message: "Server error: "+error.message, code:'0'});

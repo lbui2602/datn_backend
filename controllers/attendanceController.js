@@ -17,7 +17,12 @@ const recordAttendance = async (req, res) => {
     let workingDay = await WorkingDay.findOne({ userId, date }).populate('attendances');
 
     if (!workingDay) {
-      workingDay = await WorkingDay.create({ userId, date, attendances: [], totalHours: 0 });
+      if(compareTime(time,"08:00") > 0){
+        workingDay = await WorkingDay.create({ userId, date, attendances: [], totalHours: 0,status: 0});
+      }else{
+        workingDay = await WorkingDay.create({ userId, date, attendances: [], totalHours: 0,status :1});
+      }
+      
     }
 
     workingDay.totalHours = Number(workingDay.totalHours) || 0; // Ép kiểu đảm bảo luôn là số
@@ -31,7 +36,6 @@ const recordAttendance = async (req, res) => {
     if (lastAttendance && lastAttendance.type === 'check_in') {
       type = 'check_out';
     }
-
     // Tạo bản ghi chấm công mới
     const attendance = await Attendance.create({ userId, date, time, type, image: imagePath });
 
@@ -40,9 +44,9 @@ const recordAttendance = async (req, res) => {
 
     // Tính tổng số giờ làm
     if (type === 'check_out' && lastAttendance) {
-      const hoursWorked = calculateHours(lastAttendance.time, time);
+      const hoursWorked = calculateHours(adjustTime(lastAttendance.time), adjustTime(time));
       if (!isNaN(hoursWorked) && hoursWorked > 0) {
-        workingDay.totalHours = Number((workingDay.totalHours + hoursWorked).toFixed(2)); // Ép kiểu về số
+        workingDay.totalHours = Number((workingDay.totalHours + hoursWorked).toFixed(2));
       }
     }
 
@@ -66,6 +70,26 @@ const recordAttendance = async (req, res) => {
     res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
+function compareTime(time1, time2) {
+  const [h1, m1] = time1.split(":").map(Number);
+  const [h2, m2] = time2.split(":").map(Number);
+  return (h1 * 60 + m1) - (h2 * 60 + m2);
+}
+function adjustTime(inputTime) {
+  const [hours, minutes] = inputTime.split(':').map(Number);
+  const totalMinutes = hours * 60 + minutes;
+
+  const startOfWork = 8 * 60;  // 8:00 -> 480 phút
+  const endOfWork = 17 * 60;   // 17:00 -> 1020 phút
+
+  if (totalMinutes < startOfWork) {
+      return "08:00";
+  } else if (totalMinutes > endOfWork) {
+      return "17:00";
+  } else {
+      return inputTime; // Giữ nguyên nếu trong khoảng 8:00 - 17:00
+  }
+}
 
 // Lấy danh sách chấm công theo user
 const getAttendanceByUser = async (req, res) => {
