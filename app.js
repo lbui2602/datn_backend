@@ -5,6 +5,11 @@ const departmentRoutes = require('./routes/departmentRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const workingDayRoutes = require('./routes/workingDayRoutes');
 const roleRoutes = require('./routes/roleRoutes');
+const http = require("http");
+
+const groupRoutes = require("./routes/groupRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const socketIo = require("socket.io");
 
 const dotenv = require('dotenv');
 const path = require('path');
@@ -15,6 +20,9 @@ dotenv.config();
 
 const app = express();
 const port = 3000;
+
+const server = http.createServer(app);
+const io = socketIo(server, { cors: { origin: "*" } });
 
 // Kết nối tới MongoDB
 mongoose.connect(process.env.MONGO_URI)
@@ -33,7 +41,13 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/working-days', workingDayRoutes);
 app.use('/api/roles', roleRoutes);
 
+app.use("/api/groups", groupRoutes);
+app.use("/api/messages", messageRoutes);
+
+
+require("./socket/socketHandler")(io);
+
 // Lắng nghe server
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server đang chạy tại http://localhost:${port}`);
 });
