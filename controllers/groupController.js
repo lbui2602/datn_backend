@@ -13,3 +13,17 @@ exports.createGroup = async (req, res) => {
   await newGroup.save();
   res.status(201).json(newGroup);
 };
+
+exports.getGroupByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params; // Lấy userId từ request params
+
+    // Tìm các nhóm có userId nằm trong danh sách members (danh sách chứa userId)
+    const groups = await Group.find({ members: { $in: [userId] } });
+
+    res.json({code:'1',message:'Lấy thông tin nhóm thành công',groups:groups});
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi khi lấy danh sách nhóm", error });
+  }
+};
+
