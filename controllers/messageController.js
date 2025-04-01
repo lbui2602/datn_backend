@@ -1,16 +1,13 @@
 const Message = require("../models/Message");
 
-// Lấy tin nhắn theo groupId
 exports.getMessages = async (req, res) => {
   try {
     const { groupId } = req.params;
     console.log("🔍 Fetching messages for groupId:", groupId);
 
     const messages = await Message.find({ groupId })
-      .populate("senderId", "fullName") // Lấy thông tin name từ senderId
+      .populate("senderId", "fullName image")
       .sort({ createdAt: 1 });
-
-    console.log("📩 Messages found:", messages);
 
     if (!messages || messages.length === 0) {
       return res.status(404).json({ message: "Không có tin nhắn nào!" });
@@ -19,17 +16,21 @@ exports.getMessages = async (req, res) => {
     const formattedMessages = messages.map(msg => ({
       _id: msg._id,
       groupId: msg.groupId,
-      senderName: msg.senderId?.fullName || "Unknown", // Check nếu không có name
+      senderId: msg.senderId._id,
+      senderName: msg.senderId?.fullName || "Unknown",
+      senderImage: msg.senderId?.image || "",
       message: msg.message,
-      timestamp: msg.timestamp
+      createdAt: msg.createdAt, // Lấy thời gian gửi
+      updatedAt: msg.updatedAt  // Lấy thời gian cập nhật
     }));
 
-    res.json(formattedMessages);
+    res.json({ code: "1", message: "Lấy tin nhắn thành công!", messages: formattedMessages });
   } catch (error) {
     console.error("❌ Lỗi lấy tin nhắn:", error);
     res.status(500).json({ message: "Lỗi lấy tin nhắn", error: error.message });
   }
 };
+
 
 // Gửi tin nhắn mới (Sử dụng trong socket)
 exports.createMessage = async (data) => {
