@@ -104,6 +104,7 @@ const updateUser = async (req, res) => {
       user.address = address || user.address;
       user.roleId = roleId || user.roleId;
       user.idDepartment = idDepartment || user.idDepartment;
+      user.status = false;
 
       await user.save();
       res.json({ message: "Cập nhật thông tin thành công",code:'1', user });
@@ -142,7 +143,7 @@ const checkPassword = async (req, res) => {
 
       // Kiểm tra mật khẩu
       const isMatch = await user.matchPassword(password);
-      if (!isMatch) return res.status(400).json({ message: "false" });
+      if (!isMatch) return res.json({ message: "false" });
 
       res.json({ message: "true" });
   } catch (error) {
@@ -181,7 +182,8 @@ const getProfile = async (req, res) => {
         face_token: user.face_token,
         status: user.status,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
+        __v: user.__v,
       }
     });
   } catch (error) {
@@ -281,7 +283,8 @@ const getProfileByUserId = async (req, res) => {
         face_token: user.face_token,
         status: user.status,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
+        __v:user.__v
       }
     });
   } catch (error) {
