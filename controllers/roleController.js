@@ -6,17 +6,17 @@ const createRole = async (req, res) => {
     const { _id,name } = req.body;
     const existingRole = await Role.findById(_id);
     if (existingRole) {
-      return res.status(400).json({ message: 'Id Role đã tồn tại!',code:"0" });
+      return res.json({ message: 'Id Role đã tồn tại!',code:"0" });
     }
 
     if (!name) {
-      return res.status(400).json({ message: 'Tên vai trò không được để trống',code:"0" });
+      return res.json({ message: 'Tên vai trò không được để trống',code:"0" });
     }
 
     const newRole = new Role({ _id,name });
     await newRole.save();
 
-    res.status(201).json({ message: 'Tạo vai trò thành công', role: newRole,code:"1"});
+    res.json({ message: 'Tạo vai trò thành công', role: newRole,code:"1"});
   } catch (error) {
     res.status(500).json({ message: 'Server error: '+error.message,code:"0" });
   }
@@ -39,7 +39,7 @@ const getRoleById = async (req, res) => {
     const role = await Role.findById(id);
 
     if (!role) {
-      return res.status(404).json({ message: 'Không tìm thấy vai trò', code:'0' });
+      return res.json({ message: 'Không tìm thấy vai trò', code:'0' });
     }
 
     res.json({message:'Lấy role thành công',code:'1',role});
@@ -56,7 +56,7 @@ const updateRole = async (req, res) => {
 
     const role = await Role.findById(id);
     if (!role) {
-      return res.status(404).json({ message: 'Không tìm thấy role',code:"0" });
+      return res.json({ message: 'Không tìm thấy role',code:"0" });
     }
 
     role.name = name || role.name;
@@ -75,7 +75,7 @@ const deleteRole = async (req, res) => {
     const role = await Role.findById(id);
 
     if (!role) {
-      return res.status(404).json({ message: 'Không tìm thấy vai trò',code:"0" });
+      return res.json({ message: 'Không tìm thấy vai trò',code:"0" });
     }
 
     await role.deleteOne();

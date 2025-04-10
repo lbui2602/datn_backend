@@ -8,7 +8,7 @@ const recordAttendance = async (req, res) => {
     const { userId, time, date } = req.body;
 
     if (!req.file) {
-      return res.status(400).json({ message: "Vui lòng tải ảnh lên!", code: '0' });
+      return res.json({ message: "Vui lòng tải ảnh lên!", code: '0' });
     }
 
     const imagePath = `/uploads/attendance/${req.file.filename}`;
@@ -57,7 +57,7 @@ const recordAttendance = async (req, res) => {
       .populate('attendances')
       .lean();
 
-    res.status(201).json({
+    res.json({
       message: "Điểm danh thành công!",
       code: '1',
       attendance: attendance,
@@ -129,7 +129,7 @@ const getAttendanceByUserIdAndDate = async (req, res) => {
     let workingDay = await WorkingDay.findOne({ userId, date }).populate('attendances');
 
     if (!workingDay) {
-      return res.status(404).json({ message: "Không có dữ liệu chấm công cho ngày này!", code: '0' });
+      return res.json({ message: "Không có dữ liệu chấm công cho ngày này!", code: '0' });
     }
     res.json({
       code: '1',

@@ -14,7 +14,7 @@ const getDepartments = async (req, res) => {
 const getDepartmentById = async (req, res) => {
   try {
     const department = await Department.findById(req.params.id);
-    if (!department) return res.status(404).json({ message: 'Phòng ban không tồn tại',code:'0' });
+    if (!department) return res.json({ message: 'Phòng ban không tồn tại',code:'0' });
     res.json({code:'1',department});
   } catch (error) {
     res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
@@ -27,10 +27,10 @@ const createDepartment = async (req, res) => {
     const { _id,name } = req.body;
     // Kiểm tra phòng ban đã tồn tại chưa
     const departmentExists = await Department.findOne({ name });
-    if (departmentExists) return res.status(400).json({ message: 'Phòng ban đã tồn tại',code:'0' });
+    if (departmentExists) return res.json({ message: 'Phòng ban đã tồn tại',code:'0' });
 
     const department = await Department.create({ _id,name });
-    res.status(201).json({code:'1',department});
+    res.json({code:'1',department});
   } catch (error) {
     res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
   }
@@ -42,7 +42,7 @@ const updateDepartment = async (req, res) => {
     const { name } = req.body;
     const department = await Department.findById(req.params.id);
 
-    if (!department) return res.status(404).json({ message: 'Phòng ban không tồn tại',code:'0' });
+    if (!department) return res.json({ message: 'Phòng ban không tồn tại',code:'0' });
 
     department.name = name || department.name;
     await department.save();
@@ -58,7 +58,7 @@ const deleteDepartment = async (req, res) => {
   try {
     const department = await Department.findById(req.params.id);
 
-    if (!department) return res.status(404).json({ message: 'Phòng ban không tồn tại',code:'0' });
+    if (!department) return res.json({ message: 'Phòng ban không tồn tại',code:'0' });
 
     await department.deleteOne();
     res.json({ message: 'Xóa phòng ban thành công',code:'1' });

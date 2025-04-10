@@ -10,7 +10,7 @@ exports.getMessages = async (req, res) => {
       .sort({ createdAt: 1 });
 
     if (!messages || messages.length === 0) {
-      return res.status(404).json({ message: "Không có tin nhắn nào!" });
+      return res.json({ message: "Không có tin nhắn nào!" });
     }
 
     const formattedMessages = messages.map(msg => ({

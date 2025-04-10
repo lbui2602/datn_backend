@@ -1,10 +1,11 @@
 const express = require('express');
-const { getWorkingDaysByUser, getAllWorkingDays, calculateWorkingHours, getTotalAttendance } = require('../controllers/workingDayController');
+const { getWorkingDaysByUser, getAllWorkingDays, calculateWorkingHours, getTotalAttendance,getByUserIdAndMonthYear } = require('../controllers/workingDayController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.get('/user/:idUser', protect(), getWorkingDaysByUser);
+router.get('/user/:userId', protect(), getWorkingDaysByUser);
+router.get('/', protect(), getByUserIdAndMonthYear);
 router.get('/', protect(), getAllWorkingDays);
 router.get('/calculate/:idUser/:date', protect(), calculateWorkingHours);
 router.get('/', protect(), getAllWorkingDays);

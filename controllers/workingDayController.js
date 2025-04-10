@@ -1,5 +1,6 @@
 const WorkingDay = require('../models/WorkingDay');
 const Attendance = require('../models/Attendance');
+const mongoose = require('mongoose');
 
 // Lấy danh sách ngày làm việc của một nhân viên
 const getWorkingDaysByUser = async (req, res) => {
@@ -12,6 +13,26 @@ const getWorkingDaysByUser = async (req, res) => {
     res.status(500).json({ message: 'Server error: '+error.message,code:'0' });
   }
 };
+const getByUserIdAndMonthYear = async (req, res) => {
+  try {
+    const { userId, month, year } = req.query;
+
+    const monthStr = month.padStart(2, '0');
+    const yearStr = year.toString();
+
+    const dateRegex = new RegExp(`^\\d{2}-${monthStr}-${yearStr}$`);
+
+    const workingDays = await WorkingDay.find({
+      userId: new mongoose.Types.ObjectId(userId), // ép kiểu nè!
+      date: { $regex: dateRegex }
+    }).populate('attendances');
+
+    res.json({ code: '1', workingDays });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: ' + error.message, code: '0' });
+  }
+};
+
 
 // Lấy tất cả ngày làm việc của tất cả nhân viên
 const getAllWorkingDays = async (req, res) => {
@@ -31,7 +52,7 @@ const calculateWorkingHours = async (req, res) => {
     const workingDay = await WorkingDay.findOne({ userId, date }).populate('attendances');
 
     if (!workingDay) {
-      return res.status(404).json({ message: "No working day found for this user on this date.",code:"0" });
+      return res.json({ message: "No working day found for this user on this date.",code:"0" });
     }
 
     let totalHours = 0;
@@ -77,5 +98,10 @@ const getTotalAttendance = async (req, res) => {
   }
 };
 
-module.exports = { getWorkingDaysByUser, getAllWorkingDays, calculateWorkingHours, getTotalAttendance };
+module.exports = { 
+  getWorkingDaysByUser, 
+  getAllWorkingDays, 
+  calculateWorkingHours, 
+  getTotalAttendance,
+  getByUserIdAndMonthYear };
 

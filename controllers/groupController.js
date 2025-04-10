@@ -11,7 +11,7 @@ exports.createGroup = async (req, res) => {
   const { name, members } = req.body;
   const newGroup = new Group({ name, members });
   await newGroup.save();
-  res.status(201).json(newGroup);
+  res.json(newGroup);
 };
 
 exports.getGroupByUserId = async (req, res) => {

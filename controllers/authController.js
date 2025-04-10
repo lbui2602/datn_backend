@@ -14,13 +14,13 @@ const registerUser = async (req, res) => {
   try {
       const { fullName, email, password, phone, address, roleId, idDepartment } = req.body;
       if (!email || !password || !fullName || !address || !phone) {
-          return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin!',code:'0' });
+          return res.json({ message: 'Vui lòng nhập đầy đủ thông tin!',code:'0' });
       }
 
       // Kiểm tra email đã tồn tại chưa
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-          return res.status(400).json({ message: 'Email đã tồn tại!',code:'0'});
+          return res.json({ message: 'Email đã tồn tại!',code:'0'});
       }
       const newUser = new User({
           fullName,
@@ -36,7 +36,7 @@ const registerUser = async (req, res) => {
       });
 
       await newUser.save();
-      res.status(201).json({ message: 'Đăng ký thành công!',code:"1", user: newUser });
+      res.json({ message: 'Đăng ký thành công!',code:"1", user: newUser });
 
   } catch (error) {
       res.status(500).json({ message:"Server error: "+error.message,code:"0"});
@@ -48,7 +48,7 @@ const updateFaceToken = async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: "Người dùng không tồn tại", code: '0' });
+      return res.json({ message: "Người dùng không tồn tại", code: '0' });
     }
 
     // Cập nhật face_token
@@ -68,9 +68,9 @@ const loginUser = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Email này không tồn tại!',code:"0" });
+      return res.json({ message: 'Email này không tồn tại!',code:"0" });
     }else if( !(await user.matchPassword(password))){
-      return res.status(401).json({ message: 'Sai mật khẩu!',code:"0" });
+      return res.json({ message: 'Sai mật khẩu!',code:"0" });
     }
 
     res.json({
@@ -96,7 +96,7 @@ const updateUser = async (req, res) => {
       const { fullName, phone, address, roleId, idDepartment } = req.body;
       const user = await User.findById(req.user.id); // Lấy id từ token
 
-      if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng!",code:'0' });
+      if (!user) return res.json({ message: "Không tìm thấy người dùng!",code:'0' });
 
       // Cập nhật thông tin
       user.fullName = fullName || user.fullName;
@@ -119,11 +119,11 @@ const changePassword = async (req, res) => {
       const { oldPassword, newPassword } = req.body;
       const user = await User.findById(req.user.id);
 
-      if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng!",code:'0' });
+      if (!user) return res.json({ message: "Không tìm thấy người dùng!",code:'0' });
 
       // Kiểm tra mật khẩu cũ
       const isMatch = await user.matchPassword(oldPassword);
-      if (!isMatch) return res.status(400).json({ message: "Mật khẩu cũ không đúng!",code:'0' });
+      if (!isMatch) return res.json({ message: "Mật khẩu cũ không đúng!",code:'0' });
       const hashedPassword = await bcrypt.hash(newPassword, 10);
     await User.updateOne({ _id: user.id }, { $set: { password: hashedPassword } });
 
@@ -139,7 +139,7 @@ const checkPassword = async (req, res) => {
       const { password } = req.body;
       const user = await User.findById(req.user.id);
 
-      if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
+      if (!user) return res.json({ message: "Không tìm thấy người dùng" });
 
       // Kiểm tra mật khẩu
       const isMatch = await user.matchPassword(password);
@@ -164,7 +164,7 @@ const getProfile = async (req, res) => {
       .populate('idDepartment', 'name'); // Lấy tên department từ bảng Department
 
     if (!user) {
-      return res.status(404).json({ message: 'Người dùng không tồn tại', code: '0' });
+      return res.json({ message: 'Người dùng không tồn tại', code: '0' });
     }
 
     res.json({
@@ -199,7 +199,7 @@ const getListUserByDepartmentID = async (req, res) => {
       .populate('idDepartment', 'name');
 
     if (!users.length) {
-      return res.status(404).json({ message: "Không có người dùng nào trong phòng ban này", code: '0' });
+      return res.json({ message: "Không có người dùng nào trong phòng ban này", code: '0' });
     }
 
     const formattedUsers = users.map(user => ({
@@ -232,7 +232,7 @@ const getAllUser = async (req, res) => {
       .populate('idDepartment', 'name');
 
     if (!users.length) {
-      return res.status(404).json({ message: "Không có người dùng nào", code: '0' });
+      return res.json({ message: "Không có người dùng nào", code: '0' });
     }
 
     const formattedUsers = users.map(user => ({
@@ -265,7 +265,7 @@ const getProfileByUserId = async (req, res) => {
       .populate('idDepartment', 'name'); // Lấy tên department từ bảng Department
 
     if (!user) {
-      return res.status(404).json({ message: 'Người dùng không tồn tại', code: '0' });
+      return res.json({ message: 'Người dùng không tồn tại', code: '0' });
     }
 
     res.json({
@@ -298,11 +298,11 @@ const uploadAvatar = async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: "Người dùng không tồn tại",code:'0' });
+      return res.json({ message: "Người dùng không tồn tại",code:'0' });
     }
 
     if (!req.file) {
-      return res.status(400).json({ message: "Vui lòng chọn ảnh!",code:'0' });
+      return res.json({ message: "Vui lòng chọn ảnh!",code:'0' });
     }
 
     // Đường dẫn ảnh mới
@@ -320,13 +320,13 @@ const searchUserByFaceToken = async (req, res) => {
   try {
     const { face_token } = req.body;
     if (!face_token) {
-      return res.status(400).json({ message: "Thiếu face_token", code: '0' });
+      return res.json({ message: "Thiếu face_token", code: '0' });
     }
 
     const user = await User.findOne({ face_token });
 
     if (!user) {
-      return res.status(404).json({ message: "Không tìm thấy người dùng", code: '0' });
+      return res.json({ message: "Không tìm thấy người dùng", code: '0' });
     }
 
     res.json({
