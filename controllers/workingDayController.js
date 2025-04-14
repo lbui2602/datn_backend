@@ -44,6 +44,33 @@ const getAllWorkingDays = async (req, res) => {
     res.status(500).json({ message: 'Server error: '+error.message,code:'0' });
   }
 };
+const getWorkingDayById = async (req, res) => {
+  try {
+    const { workingDayId } = req.params;
+
+    if (!workingDayId) {
+      return res.status(400).json({ message: 'Missing workingDayId', code: '0' });
+    }
+
+    const workingDay = await WorkingDay.findById(workingDayId)
+      .populate({
+        path: 'userId',
+        populate: [
+          { path: 'roleId', model: 'Role' },
+          { path: 'idDepartment', model: 'Department' }
+        ]
+      })
+      .populate('attendances');     
+
+    if (!workingDay) {
+      return res.json({ message: 'WorkingDay not found', code: '0' });
+    }
+
+    res.json({ code: '1', workingDay });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: ' + error.message, code: '0' });
+  }
+};
 
 // Tính tổng số giờ làm việc trong một ngày
 const calculateWorkingHours = async (req, res) => {
@@ -103,5 +130,6 @@ module.exports = {
   getAllWorkingDays, 
   calculateWorkingHours, 
   getTotalAttendance,
-  getByUserIdAndMonthYear };
+  getByUserIdAndMonthYear,
+  getWorkingDayById };
 
