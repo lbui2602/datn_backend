@@ -13,7 +13,8 @@ const {
   getProfileByUserId,
   uploadAvatar,
   updateFaceToken,
-  searchUserByFaceToken
+  searchUserByFaceToken,
+  acceptUser
 } = require('../controllers/authController');
 const upload = require('../middleware/uploadAvatarMiddleware');
 const { protect } = require('../middleware/authMiddleware');
@@ -26,9 +27,10 @@ router.get('/getProfile', protect(), getProfile);
 router.put('/update', protect(), updateUser);
 router.put('/change-password', protect(), changePassword);
 router.post('/check-password', protect(), checkPassword);
-router.get('/department/:idDepartment', protect(), getListUserByDepartmentID);
+router.get('/staff/:idDepartment', protect(), getListUserByDepartmentID);
 router.get('/', protect(), getAllUser);
 router.put('/updateFaceToken', updateFaceToken);
 router.get('/:userId', protect(), getProfileByUserId);
 router.post('/search_user_by_face_token', searchUserByFaceToken);
+router.put('/accept',protect(["giam_doc","truong_phong"]), acceptUser);
 module.exports = router;

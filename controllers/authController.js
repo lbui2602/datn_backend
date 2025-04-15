@@ -42,6 +42,28 @@ const registerUser = async (req, res) => {
       res.status(500).json({ message:"Server error: "+error.message,code:"0"});
   }
 };
+const acceptUser = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.json({ message: "Người dùng không tồn tại", code: '0' });
+    }
+
+    // Kiểm tra nếu status đã là true rồi
+    if (user.status === true) {
+      return res.json({ message: "Người dùng đã được duyệt trước đó", code: '0' });
+    }
+
+    user.status = true;
+    await user.save();
+
+    res.json({ message: "Duyệt người dùng thành công", code: '1', user });
+  } catch (error) {
+    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
+  }
+};
 const updateFaceToken = async (req, res) => {
   try {
     const {userId,faceToken } = req.body;
@@ -352,5 +374,6 @@ module.exports = {
   getProfileByUserId,
   uploadAvatar,
   updateFaceToken,
-  searchUserByFaceToken
+  searchUserByFaceToken,
+  acceptUser
 };
