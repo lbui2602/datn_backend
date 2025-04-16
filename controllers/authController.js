@@ -9,6 +9,12 @@ dotenv.config();
 const generateToken = (id, roleId) => {
   return jwt.sign({ id, roleId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
+const removeVietnameseTones = (str) => {
+  return str.normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/Đ/g, "D");
+};
 
 const registerUser = async (req, res) => {
   try {
@@ -16,7 +22,12 @@ const registerUser = async (req, res) => {
       if (!email || !password || !fullName || !address || !phone) {
           return res.json({ message: 'Vui lòng nhập đầy đủ thông tin!',code:'0' });
       }
+      const fullName_no_accent = removeVietnameseTones(fullName);
 
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.json({ message: 'Email không hợp lệ!', code: '0' });
+      }
       // Kiểm tra email đã tồn tại chưa
       const existingUser = await User.findOne({ email });
       if (existingUser) {
@@ -24,6 +35,7 @@ const registerUser = async (req, res) => {
       }
       const newUser = new User({
           fullName,
+          fullName_no_accent,
           email,
           password,
           phone,
@@ -120,13 +132,14 @@ const updateUser = async (req, res) => {
 
       if (!user) return res.json({ message: "Không tìm thấy người dùng!",code:'0' });
 
-      // Cập nhật thông tin
-      user.fullName = fullName || user.fullName;
+      if (fullName) {
+        user.fullName = fullName;
+        user.fullName_no_accent = removeVietnameseTones(fullName);
+      }
       user.phone = phone || user.phone;
       user.address = address || user.address;
       user.roleId = roleId || user.roleId;
       user.idDepartment = idDepartment || user.idDepartment;
-      user.status = false;
 
       await user.save();
       res.json({ message: "Cập nhật thông tin thành công",code:'1', user });
@@ -242,6 +255,37 @@ const getListUserByDepartmentID = async (req, res) => {
     res.json({ code: '1', users: formattedUsers });
   } catch (error) {
     res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
+const searchByName = async (req, res) => {
+  try {
+    const name = req.query.name || "";
+    const normalized = removeVietnameseTones(name).toLowerCase();
+
+    const users = await User.find({
+      fullName_no_accent: { $regex: normalized, $options: "i" } // không phân biệt hoa thường
+    })
+    .populate('roleId', 'name') 
+    .populate('idDepartment', 'name');
+
+    const formattedUsers = users.map(user => ({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      role: user.roleId ? user.roleId.name : null,
+      department: user.idDepartment ? user.idDepartment.name : null,
+      image: user.image,
+      face_token: user.face_token,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    }));
+
+    res.json({ code: '1', users: formattedUsers });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -375,5 +419,6 @@ module.exports = {
   uploadAvatar,
   updateFaceToken,
   searchUserByFaceToken,
-  acceptUser
+  acceptUser,
+  searchByName
 };
