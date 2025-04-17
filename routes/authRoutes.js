@@ -12,8 +12,6 @@ const {
   getAllUser,
   getProfileByUserId,
   uploadAvatar,
-  updateFaceToken,
-  searchUserByFaceToken,
   acceptUser,
   searchByName
 } = require('../controllers/authController');
@@ -31,8 +29,6 @@ router.post('/check-password', protect(), checkPassword);
 router.get('/staff/:idDepartment', protect(), getListUserByDepartmentID);
 router.get('/search', protect(), searchByName);
 router.get('/', protect(), getAllUser);
-router.put('/updateFaceToken', updateFaceToken);
 router.get('/:userId', protect(), getProfileByUserId);
-router.post('/search_user_by_face_token', searchUserByFaceToken);
 router.put('/accept',protect(["giam_doc","truong_phong"]), acceptUser);
 module.exports = router;

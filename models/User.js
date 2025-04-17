@@ -12,7 +12,6 @@ const UserSchema = new mongoose.Schema(
     roleId: { type: String, ref: 'Role', required: true }, // Liên kết đến bảng Role
     idDepartment: { type: String, ref: 'Department', required: true }, // Liên kết đến bảng Department
     image: { type: String, required: false },
-    face_token: { type: String, required: false },
     status: { type: Boolean, required: true }
   },
   { timestamps: true }

@@ -43,7 +43,6 @@ const registerUser = async (req, res) => {
           roleId,
           idDepartment,
           image : "",
-          face_token : "",
           status : false
       });
 
@@ -76,24 +75,6 @@ const acceptUser = async (req, res) => {
     res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
-const updateFaceToken = async (req, res) => {
-  try {
-    const {userId,faceToken } = req.body;
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.json({ message: "Người dùng không tồn tại", code: '0' });
-    }
-
-    // Cập nhật face_token
-    user.face_token = faceToken;
-    await user.save();
-
-    res.json({ message: "Cập nhật face_token thành công", code: '1', face_token: user.face_token });
-  } catch (error) {
-    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
-  }
-};
 
 // Đăng nhập
 const loginUser = async (req, res) => {
@@ -118,7 +99,6 @@ const loginUser = async (req, res) => {
       roleId: user.roleId,
       idDepartment: user.idDepartment,
       image: user.image,
-      face_token : user.face_token,
       token: generateToken(user.id, user.roleId),
     });
   } catch (error) {
@@ -214,7 +194,6 @@ const getProfile = async (req, res) => {
         role: user.roleId ? user.roleId.name : null, // Đổi roleId thành role name
         department: user.idDepartment ? user.idDepartment.name : null, // Đổi idDepartment thành department name
         image: user.image,
-        face_token: user.face_token,
         status: user.status,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
@@ -246,7 +225,6 @@ const getListUserByDepartmentID = async (req, res) => {
       role: user.roleId ? user.roleId.name : null,
       department: user.idDepartment ? user.idDepartment.name : null,
       image: user.image,
-      face_token: user.face_token,
       status: user.status,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
@@ -277,7 +255,6 @@ const searchByName = async (req, res) => {
       role: user.roleId ? user.roleId.name : null,
       department: user.idDepartment ? user.idDepartment.name : null,
       image: user.image,
-      face_token: user.face_token,
       status: user.status,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
@@ -310,7 +287,6 @@ const getAllUser = async (req, res) => {
       role: user.roleId ? user.roleId.name : null,
       department: user.idDepartment ? user.idDepartment.name : null,
       image: user.image,
-      face_token: user.face_token,
       status: user.status,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
@@ -346,7 +322,6 @@ const getProfileByUserId = async (req, res) => {
         role: user.roleId ? user.roleId.name : null, 
         department: user.idDepartment ? user.idDepartment.name : null, 
         image: user.image,
-        face_token: user.face_token,
         status: user.status,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
@@ -382,28 +357,6 @@ const uploadAvatar = async (req, res) => {
     res.status(500).json({ message: "Server error: "+error.message, code:'0' });
   }
 };
-const searchUserByFaceToken = async (req, res) => {
-  try {
-    const { face_token } = req.body;
-    if (!face_token) {
-      return res.json({ message: "Thiếu face_token", code: '0' });
-    }
-
-    const user = await User.findOne({ face_token });
-
-    if (!user) {
-      return res.json({ message: "Không tìm thấy người dùng", code: '0' });
-    }
-
-    res.json({
-      message: "Tìm thấy người dùng",
-      code: '1',
-      user: user
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Lỗi server: " + error.message, code: '0' });
-  }
-};
 
 module.exports = {
   registerUser,
@@ -417,8 +370,6 @@ module.exports = {
   getAllUser,
   getProfileByUserId,
   uploadAvatar,
-  updateFaceToken,
-  searchUserByFaceToken,
   acceptUser,
   searchByName
 };
