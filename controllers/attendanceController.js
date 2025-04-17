@@ -142,4 +142,4 @@ const getAttendanceByUserIdAndDate = async (req, res) => {
   }
 };
 
-module.exports = { recordAttendance, getAttendanceByUser, getAttendanceByUserIdAndDate };
+module.exports = { recordAttendance, getAttendanceByUser, getAttendanceByUserIdAndDate,calculateHours,adjustTime,compareTime };

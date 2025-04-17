@@ -1,10 +1,25 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const faceapi = require('face-api.js');
+const canvas = require('canvas');
 const authRoutes = require('./routes/authRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const workingDayRoutes = require('./routes/workingDayRoutes');
 const roleRoutes = require('./routes/roleRoutes');
+
+// Routes face
+const faceRoutes = require('./routes/faceRoutes');
+const trainingRoutes = require('./routes/trainingRoutes');
+
+// Models face
+const FaceModel = require('./models/FaceModel');
+
+// Controllers face
+const { setFaceMatcher: setFaceMatcherFace } = require('./controllers/faceController');
+const { setFaceMatcher: setFaceMatcherTraining, trainedData } = require('./controllers/trainingController');
+
+
 const http = require("http");
 
 const groupRoutes = require("./routes/groupRoutes");
@@ -28,7 +43,66 @@ const io = socketIo(server, { cors: { origin: "*" } });
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB connected'))
     .catch((err) => console.error('MongoDB connection error:', err));
+// Cấu hình Canvas cho FaceAPI
+faceapi.env.monkeyPatch({ Canvas: canvas.Canvas, Image: canvas.Image, ImageData: canvas.ImageData });
 
+// Đường dẫn mô hình và dữ liệu
+const modelsPath = path.join(__dirname, 'models');
+
+// Hàm tải dữ liệu huấn luyện từ MongoDB
+const loadTrainingDataFromDB = async () => {
+    try {
+        const faces = await FaceModel.find();
+        return faces.map((face) => {
+            const descriptors = face.descriptors.map((desc) => new Float32Array(desc));
+            return new faceapi.LabeledFaceDescriptors(face.label, descriptors);
+        });
+    } catch (err) {
+        console.error('Lỗi khi tải dữ liệu từ MongoDB:', err);
+        return [];
+    }
+};
+
+// Hàm tải các mô hình nhận diện
+async function initModels() {
+    try {
+        await faceapi.nets.ssdMobilenetv1.loadFromDisk(modelsPath);
+        await faceapi.nets.faceRecognitionNet.loadFromDisk(modelsPath);
+        await faceapi.nets.faceLandmark68Net.loadFromDisk(modelsPath);
+        console.log('Mô hình nhận diện đã được tải xong.');
+    } catch (err) {
+        console.error('Lỗi khi tải các mô hình nhận diện:', err);
+    }
+}
+
+// Hàm khởi tạo ứng dụng
+async function init() {
+    await initModels();
+
+    // Lấy dữ liệu từ MongoDB
+    const faceDescriptorsFromDB = await loadTrainingDataFromDB();
+
+    if (faceDescriptorsFromDB.length === 0) {
+        console.warn('Không có dữ liệu huấn luyện trong MongoDB.');
+    }
+
+    // Gán dữ liệu đã huấn luyện
+    trainedData.splice(0, trainedData.length, ...faceDescriptorsFromDB);
+    console.log('Dữ liệu huấn luyện đã được tải:', trainedData);
+
+    // Tạo FaceMatcher nếu có dữ liệu
+    if (trainedData.length > 0) {
+        const faceMatcher = new faceapi.FaceMatcher(trainedData, 0.6);
+        setFaceMatcherFace(faceMatcher);
+        setFaceMatcherTraining(faceMatcher);
+        console.log('FaceMatcher đã được khởi tạo.');
+    } else {
+        console.warn('FaceMatcher không được khởi tạo do thiếu dữ liệu.');
+    }
+}
+
+// Khởi chạy ứng dụng
+init();
 
 // Routes
 app.use(cors());
@@ -40,13 +114,13 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/working-days', workingDayRoutes);
 app.use('/api/roles', roleRoutes);
-
 app.use("/api/groups", groupRoutes);
 app.use("/api/messages", messageRoutes);
-
-
 require("./socket/socketHandler")(io);
 
+// Routes face
+app.use('/api/face', faceRoutes);
+app.use('/api/training', trainingRoutes);
 // Lắng nghe server
 server.listen(port, () => {
     console.log(`Server đang chạy tại http://localhost:${port}`);
