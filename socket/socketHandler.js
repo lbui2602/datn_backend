@@ -1,6 +1,8 @@
 const MessageController = require("../controllers/messageController");
 const Message = require("../models/Message");
 
+const onlineUsers = new Map();
+
 module.exports = (io) => {
   io.on("connection", (socket) => {
     console.log(`🔵 User connected: ${socket.id}`);
@@ -8,13 +10,23 @@ module.exports = (io) => {
     // Lưu danh sách nhóm của user
     socket.userGroups = new Set();
 
+    socket.on("user_connected", (userId) => {
+      console.log(`✅ User ${userId} connected with socket ${socket.id}`);
+      onlineUsers.set(userId, socket.id);
+      socket.userId = userId; // Gắn userId vào socket để dễ xử lý sau này
+    });
+
     // Xử lý khi user join vào nhóm
     socket.on("join_group", (groupId) => {
       if (!socket.rooms.has(groupId)) {
         socket.join(groupId);
         socket.userGroups.add(groupId);
         console.log(`✅ User ${socket.id} joined group ${groupId}`);
-        console.log("📢 Users in group:", groupId, io.sockets.adapter.rooms.get(groupId));
+        console.log(
+          "📢 Users in group:",
+          groupId,
+          io.sockets.adapter.rooms.get(groupId)
+        );
       } else {
         console.log(`⚠️ User ${socket.id} already in group ${groupId}`);
       }
@@ -43,7 +55,10 @@ module.exports = (io) => {
         }
 
         // Debug: Kiểm tra có bao nhiêu socket trong group
-        console.log("📢 Users in group before sending message:", io.sockets.adapter.rooms.get(data.groupId));
+        console.log(
+          "📢 Users in group before sending message:",
+          io.sockets.adapter.rooms.get(data.groupId)
+        );
 
         // Gửi tin nhắn đã có đầy đủ thông tin tới nhóm
         io.to(data.groupId).emit("receive_message", {
@@ -74,6 +89,12 @@ module.exports = (io) => {
       });
 
       socket.userGroups.clear();
+
+      if (socket.userId) {
+        onlineUsers.delete(socket.userId);
+        console.log(`🛑 Removed user ${socket.userId} from online users`);
+      }
     });
   });
 };
+module.exports.onlineUsers = onlineUsers;

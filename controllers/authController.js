@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
+const { onlineUsers } = require("../socket/socketHandler");
 dotenv.config();
 
 // Tạo token
@@ -270,33 +271,31 @@ const searchByName = async (req, res) => {
 // Lấy toàn bộ danh sách người dùng
 const getAllUser = async (req, res) => {
   try {
-    const users = await User.find()
-      .populate('roleId', 'name')
-      .populate('idDepartment', 'name');
+    const { userId } = req.params;
+    const { search } = req.query; // lấy search từ query string
 
-    if (!users.length) {
-      return res.json({ message: "Không có người dùng nào", code: '0' });
+    // Tạo điều kiện tìm kiếm
+    const query = {
+      _id: { $ne: userId }, // loại trừ userId
+    };
+
+    if (search && search.trim() !== "") {
+      query.fullName_no_accent = { $regex: search, $options: "i" }; // tìm theo fullName chứa search (không phân biệt hoa thường)
     }
 
-    const formattedUsers = users.map(user => ({
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      address: user.address,
-      role: user.roleId ? user.roleId.name : null,
-      department: user.idDepartment ? user.idDepartment.name : null,
-      image: user.image,
-      status: user.status,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+    const users = await User.find(query).lean();
+
+    const usersWithStatus = users.map((user) => ({
+      ...user,
+      isOnline: onlineUsers.has(user._id.toString()), // Check online
     }));
 
-    res.json({ code: '1', users: formattedUsers });
+    res.json({ code: "1", message: "Lấy danh sách user thành công", users: usersWithStatus });
   } catch (error) {
-    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
+    res.status(500).json({ code: "0", message: "Lỗi khi lấy danh sách user", error:error });
   }
 };
+
 
 
 const getProfileByUserId = async (req, res) => {
