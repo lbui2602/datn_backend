@@ -271,6 +271,7 @@ const searchByName = async (req, res) => {
 // Lấy toàn bộ danh sách người dùng
 const getAllUser = async (req, res) => {
   try {
+    console.log(onlineUsers)
     const { userId } = req.params;
     const { search } = req.query; // lấy search từ query string
 
@@ -289,6 +290,7 @@ const getAllUser = async (req, res) => {
       ...user,
       isOnline: onlineUsers.has(user._id.toString()), // Check online
     }));
+  
 
     res.json({ code: "1", message: "Lấy danh sách user thành công", users: usersWithStatus });
   } catch (error) {

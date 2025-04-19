@@ -1,38 +1,49 @@
 const MessageController = require("../controllers/messageController");
 const Message = require("../models/Message");
 
-const onlineUsers = new Map();
+const onlineUsers = new Map(); // userId -> Set(socketId)
 
 module.exports = (io) => {
   io.on("connection", (socket) => {
     console.log(`🔵 User connected: ${socket.id}`);
 
-    // Lưu danh sách nhóm của user
+    // Lưu danh sách group mà user tham gia
     socket.userGroups = new Set();
 
-    socket.on("user_connected", (userId) => {
+    // Khi client báo userId sau khi kết nối
+    socket.on('user_connected', (userId) => {
+      // ✅ Remove socketId from any old user
+      for (const [key, socketSet] of onlineUsers.entries()) {
+        if (socketSet.has(socket.id)) {
+          socketSet.delete(socket.id);
+          if (socketSet.size === 0) {
+            onlineUsers.delete(key);
+          }
+        }
+      }
+
+      // ✅ Add socket.id to the correct userId
+      if (!onlineUsers.has(userId)) {
+        onlineUsers.set(userId, new Set());
+      }
+      onlineUsers.get(userId).add(socket.id);
+
       console.log(`✅ User ${userId} connected with socket ${socket.id}`);
-      onlineUsers.set(userId, socket.id);
-      socket.userId = userId; // Gắn userId vào socket để dễ xử lý sau này
     });
 
-    // Xử lý khi user join vào nhóm
+    // Khi client yêu cầu join group
     socket.on("join_group", (groupId) => {
       if (!socket.rooms.has(groupId)) {
         socket.join(groupId);
         socket.userGroups.add(groupId);
         console.log(`✅ User ${socket.id} joined group ${groupId}`);
-        console.log(
-          "📢 Users in group:",
-          groupId,
-          io.sockets.adapter.rooms.get(groupId)
-        );
+        console.log("📢 Users in group:", groupId, io.sockets.adapter.rooms.get(groupId));
       } else {
         console.log(`⚠️ User ${socket.id} already in group ${groupId}`);
       }
     });
 
-    // Xử lý gửi tin nhắn
+    // Khi client gửi tin nhắn
     socket.on("send_message", async (data) => {
       try {
         console.log("📤 Received send_message:", data);
@@ -45,7 +56,7 @@ module.exports = (io) => {
         const newMessage = await MessageController.createMessage(data);
         console.log("✅ Message created:", newMessage);
 
-        // Lấy thông tin đầy đủ của người gửi
+        // Populate thông tin người gửi
         const populatedMessage = await Message.findById(newMessage._id)
           .populate("senderId", "fullName image")
           .lean();
@@ -54,13 +65,12 @@ module.exports = (io) => {
           return console.log("❌ Could not find message after creation.");
         }
 
-        // Debug: Kiểm tra có bao nhiêu socket trong group
         console.log(
           "📢 Users in group before sending message:",
           io.sockets.adapter.rooms.get(data.groupId)
         );
 
-        // Gửi tin nhắn đã có đầy đủ thông tin tới nhóm
+        // Gửi message tới tất cả thành viên trong group
         io.to(data.groupId).emit("receive_message", {
           _id: populatedMessage._id,
           groupId: populatedMessage.groupId,
@@ -78,23 +88,39 @@ module.exports = (io) => {
       }
     });
 
-    // Xử lý khi client disconnect
-    socket.on("disconnect", () => {
+    // Khi client disconnect
+    socket.on('disconnect', () => {
       console.log(`🔴 User disconnected: ${socket.id}`);
 
-      // Rời khỏi tất cả nhóm đã tham gia
-      socket.userGroups.forEach((groupId) => {
-        socket.leave(groupId);
-        console.log(`🚪 User ${socket.id} left group ${groupId}`);
-      });
+      // Duyệt hết Map
+      for (const [userId, socketSet] of onlineUsers.entries()) {
+        if (socketSet.has(socket.id)) {
+          socketSet.delete(socket.id); // Xóa socket.id ra khỏi Set
 
-      socket.userGroups.clear();
+          // Nếu user đó không còn socketId nào thì xóa luôn userId ra khỏi Map
+          if (socketSet.size === 0) {
+            onlineUsers.delete(userId);
+          }
 
-      if (socket.userId) {
-        onlineUsers.delete(socket.userId);
-        console.log(`🛑 Removed user ${socket.userId} from online users`);
+          console.log(`🚪 User ${socket.id} left group ${userId}`);
+          break; // Vì một socket.id chỉ nằm ở 1 user nên break luôn
+        }
       }
+
+      console.log("🗺️ Current onlineUsers:", Object.fromEntries(
+        Array.from(onlineUsers.entries()).map(([userId, socketSet]) => [userId, Array.from(socketSet)])
+      ));
     });
   });
 };
+
+// Helper function để in Map cho đẹp
+function mapToObject(map) {
+  const obj = {};
+  for (const [key, value] of map.entries()) {
+    obj[key] = Array.from(value);
+  }
+  return obj;
+}
+
 module.exports.onlineUsers = onlineUsers;
