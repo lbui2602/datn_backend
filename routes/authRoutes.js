@@ -29,6 +29,6 @@ router.post('/check-password', protect(), checkPassword);
 router.get('/staff/:idDepartment', protect(), getListUserByDepartmentID);
 router.get('/search', protect(), searchByName);
 router.get('/getAll/:userId', protect(), getAllUser);
-router.get('/:userId', protect(), getProfileByUserId);
+router.get('getProfileByUserId/:userId', protect(), getProfileByUserId);
 router.put('/accept',protect(["giam_doc","truong_phong"]), acceptUser);
 module.exports = router;
