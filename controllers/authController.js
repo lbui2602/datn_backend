@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
-const { onlineUsers } = require("../socket/socketHandler");
+const { onlineUsers, emitBlockAccount } = require("../socket/socketHandler");
 dotenv.config();
 
 // Tạo token
@@ -65,19 +65,22 @@ const acceptUser = async (req, res) => {
       return res.json({ message: "Người dùng không tồn tại", code: '0' });
     }
 
-    // Kiểm tra nếu status đã là true rồi
     if (user.status === true) {
-      return res.json({ message: "Người dùng đã được duyệt trước đó", code: '0' });
+      user.status = false;
+      await user.save(); // Đừng quên save nếu bạn thay đổi status
+      emitBlockAccount(userId);
+      return res.json({ message: "Khóa người dùng thành công", code: '1', user });
     }
 
     user.status = true;
     await user.save();
 
-    res.json({ message: "Duyệt người dùng thành công", code: '1', user });
+    return res.json({ message: "Duyệt người dùng thành công", code: '1', user });
   } catch (error) {
-    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
+    return res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
+
 
 // Đăng nhập
 const loginUser = async (req, res) => {
@@ -112,8 +115,8 @@ const loginUser = async (req, res) => {
 };
 const updateUser = async (req, res) => {
   try {
-      const { fullName, phone, address, roleId, idDepartment, birthday, gender } = req.body;
-      const user = await User.findById(req.user.id); // Lấy id từ token
+      const { _id,fullName, phone, address, roleId, idDepartment, birthday, gender } = req.body;
+      const user = await User.findById(_id); // Lấy id từ token
 
       if (!user) return res.json({ message: "Không tìm thấy người dùng!",code:'0' });
 
