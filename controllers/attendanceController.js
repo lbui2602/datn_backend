@@ -149,28 +149,35 @@ const getAllAttendance = async (req, res) => {
     // Tạo bộ lọc cho user
     let userFilter = {};
 
+    // Ưu tiên lọc theo idDepartment trước
+    if (idDepartment && idDepartment.trim() !== "") {
+      userFilter.idDepartment = idDepartment.trim();
+    }
+
+    // Nếu có name, thêm điều kiện tìm name
     if (name && name.trim() !== "") {
       userFilter.fullName_no_accent = { $regex: new RegExp(name.trim(), 'i') };
     }
 
-    if (idDepartment && idDepartment.trim() !== "") {
-      userFilter.idDepartment = idDepartment;
-    }
-
     // Lấy danh sách userId phù hợp
     const users = await User.find(userFilter).select('_id');
-
     const userIds = users.map(user => user._id);
 
-    // Tạo bộ lọc cho attendance
-    let attendanceFilter = {};
-
-    if (userIds.length > 0) {
-      attendanceFilter.userId = { $in: userIds };
+    // Nếu không có user phù hợp, trả về rỗng
+    if (userIds.length === 0) {
+      return res.json({
+        code: '1',
+        attendances: []
+      });
     }
 
+    // Tạo bộ lọc cho attendance
+    let attendanceFilter = {
+      userId: { $in: userIds }
+    };
+
     if (date && date.trim() !== "") {
-      attendanceFilter.date = date;
+      attendanceFilter.date = date.trim();
     }
 
     // Lấy danh sách attendance
@@ -179,7 +186,7 @@ const getAllAttendance = async (req, res) => {
         path: 'userId',
         select: 'fullName fullName_no_accent idDepartment'
       })
-      .sort({ date: 1, time: 1 })
+      .sort({ date: -1, time: -1 })
       .lean();
 
     res.json({
@@ -192,6 +199,8 @@ const getAllAttendance = async (req, res) => {
     res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
+
+
 
 module.exports = { recordAttendance,
    getAttendanceByUser,
