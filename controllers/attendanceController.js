@@ -1,5 +1,6 @@
 const Attendance = require('../models/Attendance');
 const WorkingDay = require('../models/WorkingDay');
+const User = require('../models/User');
 const path = require('path');
 
 // Ghi nhận chấm công
@@ -141,5 +142,62 @@ const getAttendanceByUserIdAndDate = async (req, res) => {
     res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
+const getAllAttendance = async (req, res) => {
+  try {
+    const { date, name, idDepartment } = req.body;
 
-module.exports = { recordAttendance, getAttendanceByUser, getAttendanceByUserIdAndDate,calculateHours,adjustTime,compareTime };
+    // Tạo bộ lọc cho user
+    let userFilter = {};
+
+    if (name && name.trim() !== "") {
+      userFilter.fullName_no_accent = { $regex: new RegExp(name.trim(), 'i') };
+    }
+
+    if (idDepartment && idDepartment.trim() !== "") {
+      userFilter.idDepartment = idDepartment;
+    }
+
+    // Lấy danh sách userId phù hợp
+    const users = await User.find(userFilter).select('_id');
+
+    const userIds = users.map(user => user._id);
+
+    // Tạo bộ lọc cho attendance
+    let attendanceFilter = {};
+
+    if (userIds.length > 0) {
+      attendanceFilter.userId = { $in: userIds };
+    }
+
+    if (date && date.trim() !== "") {
+      attendanceFilter.date = date;
+    }
+
+    // Lấy danh sách attendance
+    const attendances = await Attendance.find(attendanceFilter)
+      .populate({
+        path: 'userId',
+        select: 'fullName fullName_no_accent idDepartment'
+      })
+      .sort({ date: 1, time: 1 })
+      .lean();
+
+    res.json({
+      code: '1',
+      attendances: attendances
+    });
+
+  } catch (error) {
+    console.error("Lỗi server:", error);
+    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
+  }
+};
+
+module.exports = { recordAttendance,
+   getAttendanceByUser,
+   getAttendanceByUserIdAndDate,
+   calculateHours,
+   adjustTime,
+   compareTime,
+   getAllAttendance 
+  };

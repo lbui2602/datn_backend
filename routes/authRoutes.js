@@ -5,6 +5,7 @@ const {
   loginUser,
   logoutUser,
   getProfile,
+  getUserInfo,
   updateUser,
   changePassword,
   checkPassword,
@@ -23,6 +24,7 @@ router.post('/uploadAvatar', upload.single('image_file'), uploadAvatar);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
 router.get('/getProfile', protect(), getProfile);
+router.get('/getUserInfo', protect(), getUserInfo);
 router.put('/update', protect(), updateUser);
 router.put('/change-password', protect(), changePassword);
 router.post('/check-password', protect(), checkPassword);

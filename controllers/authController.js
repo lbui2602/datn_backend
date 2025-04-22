@@ -216,6 +216,23 @@ const getProfile = async (req, res) => {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 };
+const getUserInfo = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+
+    if (!user) {
+      return res.json({ message: 'Người dùng không tồn tại', code: '0' });
+    }
+
+    res.json({
+      code: '1',
+      message: 'Lấy thông tin người dùng thành công',
+      user: user
+      });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
 
 const getListUserByDepartmentID = async (req, res) => {
   try {
@@ -399,6 +416,7 @@ module.exports = {
   loginUser,
   logoutUser,
   getProfile,
+  getUserInfo,
   updateUser,
   changePassword,
   checkPassword,
