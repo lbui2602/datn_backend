@@ -228,8 +228,8 @@ const verifyFace = async (req, res) => {
     const lastAttendance =
       workingDay.attendances.length > 0
         ? await Attendance.findById(
-            workingDay.attendances[workingDay.attendances.length - 1]
-          )
+          workingDay.attendances[workingDay.attendances.length - 1]
+        )
         : null;
 
     let type = "check_in";
