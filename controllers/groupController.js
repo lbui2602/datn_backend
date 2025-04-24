@@ -11,10 +11,24 @@ exports.getGroups = async (req, res) => {
 // Tạo nhóm mới
 exports.createGroup = async (req, res) => {
   const { name, members } = req.body;
-  const newGroup = new Group({ name, members });
-  await newGroup.save();
-  res.json(newGroup);
+
+  try {
+    // kiểm tra nhóm đã tồn tại chưa
+    const existingGroup = await Group.findOne({ name });
+    if (existingGroup) {
+      return res.json({ code: "0", message: "Tên nhóm đã tồn tại" });
+    }
+
+    // nếu chưa có thì tạo mới
+    const newGroup = new Group({ name, members });
+    await newGroup.save();
+    res.json({ code: "1", newGroup });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ code: "0", message: "Lỗi server" });
+  }
 };
+
 exports.getGroupById = async (req, res) => {
   try {
     const { groupId } = req.params;

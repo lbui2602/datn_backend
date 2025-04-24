@@ -7,6 +7,6 @@ router.get("/", getGroups);
 router.get("/:userId", getGroupByUserId);
 router.get("/getById/:groupId",protect(), getGroupById);
 router.get("/getPrivateGroup/:userId2", protect(),getPrivateGroup);
-router.post("/", createGroup);
+router.post("/",protect(), createGroup);
 
 module.exports = router;
