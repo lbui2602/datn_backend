@@ -2,8 +2,9 @@ const MessageController = require("../controllers/messageController");
 const Message = require("../models/Message");
 
 const onlineUsers = new Map(); // userId -> Set(socketId)
-
+let ioGlobal = null;
 module.exports = (io) => {
+  ioGlobal = io;
   io.on("connection", (socket) => {
     console.log(`🔵 User connected: ${socket.id}`);
 
@@ -123,4 +124,22 @@ function mapToObject(map) {
   return obj;
 }
 
+function emitBlockAccount(userId) {
+  if (!ioGlobal) {
+    console.error("❌ io is not initialized");
+    return;
+  }
+  const sockets = onlineUsers.get(userId);
+  if (sockets && sockets.size > 0) {
+    for (const socketId of sockets) {
+      const socket = ioGlobal.sockets.sockets.get(socketId);
+      if (socket) {
+        socket.emit('block_account', { userId });
+      }
+    }
+    console.log(`🚫 Emit block_account to user ${userId}`);
+  }
+}
+
 module.exports.onlineUsers = onlineUsers;
+module.exports.emitBlockAccount = emitBlockAccount;

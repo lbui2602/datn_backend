@@ -9,8 +9,10 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     phone: { type: String, required: true },
     address: { type: String, required: true },
-    roleId: { type: String, ref: 'Role', required: true }, // Liên kết đến bảng Role
-    idDepartment: { type: String, ref: 'Department', required: true }, // Liên kết đến bảng Department
+    birthday: { type: String, required: true }, // Ngày sinh dạng String
+    gender: { type: String, required: true },   // Giới tính dạng String
+    roleId: { type: String, ref: 'Role', required: true },
+    idDepartment: { type: String, ref: 'Department', required: true },
     image: { type: String, required: false },
     status: { type: Boolean, required: true }
   },
