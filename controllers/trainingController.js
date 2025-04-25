@@ -110,7 +110,7 @@ const training = async (req, res) => {
       contentType: req.file.mimetype,
     });
 
-    const response = await axios.post("http://localhost:5000/detect-face", formData, {
+    const response = await axios.post("http://0.0.0.0:5000/detect-face", formData, {
       headers: formData.getHeaders(),
     });
 

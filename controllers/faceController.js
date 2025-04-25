@@ -312,7 +312,7 @@ const compareFaces = async (req, res) => {
     });
     formData.append("image2", fs.createReadStream(serverImagePath));
 
-    const response = await axios.post("http://localhost:5000/compare-faces", formData, {
+    const response = await axios.post("http://0.0.0.0:5000/compare-faces", formData, {
       headers: formData.getHeaders(),
     });
 
