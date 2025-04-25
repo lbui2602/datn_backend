@@ -13,7 +13,8 @@ const getDepartments = async (req, res) => {
 // Lấy chi tiết phòng ban theo ID
 const getDepartmentById = async (req, res) => {
   try {
-    const department = await Department.findById(req.params.id);
+    const id = req.params.id
+    const department = await Department.findById(id);
     if (!department) return res.json({ message: 'Phòng ban không tồn tại',code:'0' });
     res.json({code:'1',department});
   } catch (error) {

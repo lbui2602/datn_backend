@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
-const { onlineUsers } = require("../socket/socketHandler");
+const { onlineUsers, emitBlockAccount } = require("../socket/socketHandler");
 dotenv.config();
 
 // Tạo token
@@ -19,8 +19,8 @@ const removeVietnameseTones = (str) => {
 
 const registerUser = async (req, res) => {
   try {
-      const { fullName, email, password, phone, address, roleId, idDepartment } = req.body;
-      if (!email || !password || !fullName || !address || !phone) {
+      const { fullName, email, password, phone, address, roleId, idDepartment, birthday,gender } = req.body;
+      if (!email || !password || !fullName || !address || !phone || !birthday || !gender) {
           return res.json({ message: 'Vui lòng nhập đầy đủ thông tin!',code:'0' });
       }
       const fullName_no_accent = removeVietnameseTones(fullName);
@@ -41,6 +41,8 @@ const registerUser = async (req, res) => {
           password,
           phone,
           address,
+          birthday,
+          gender,
           roleId,
           idDepartment,
           image : "",
@@ -63,19 +65,22 @@ const acceptUser = async (req, res) => {
       return res.json({ message: "Người dùng không tồn tại", code: '0' });
     }
 
-    // Kiểm tra nếu status đã là true rồi
     if (user.status === true) {
-      return res.json({ message: "Người dùng đã được duyệt trước đó", code: '0' });
+      user.status = false;
+      await user.save(); // Đừng quên save nếu bạn thay đổi status
+      emitBlockAccount(userId);
+      return res.json({ message: "Khóa người dùng thành công", code: '1', user });
     }
 
     user.status = true;
     await user.save();
 
-    res.json({ message: "Duyệt người dùng thành công", code: '1', user });
+    return res.json({ message: "Duyệt người dùng thành công", code: '1', user });
   } catch (error) {
-    res.status(500).json({ message: "Server error: " + error.message, code: '0' });
+    return res.status(500).json({ message: "Server error: " + error.message, code: '0' });
   }
 };
+
 
 // Đăng nhập
 const loginUser = async (req, res) => {
@@ -97,6 +102,8 @@ const loginUser = async (req, res) => {
       email: user.email,
       phone: user.phone,
       address: user.address,
+      birthday: user.birthday,
+      gender : user.gender,
       roleId: user.roleId,
       idDepartment: user.idDepartment,
       image: user.image,
@@ -108,8 +115,8 @@ const loginUser = async (req, res) => {
 };
 const updateUser = async (req, res) => {
   try {
-      const { fullName, phone, address, roleId, idDepartment } = req.body;
-      const user = await User.findById(req.user.id); // Lấy id từ token
+      const { _id,fullName, phone, address, roleId, idDepartment, birthday, gender } = req.body;
+      const user = await User.findById(_id); // Lấy id từ token
 
       if (!user) return res.json({ message: "Không tìm thấy người dùng!",code:'0' });
 
@@ -121,6 +128,8 @@ const updateUser = async (req, res) => {
       user.address = address || user.address;
       user.roleId = roleId || user.roleId;
       user.idDepartment = idDepartment || user.idDepartment;
+      user.birthday = birthday || user.birthday;
+      user.gender = gender || user.gender;
 
       await user.save();
       res.json({ message: "Cập nhật thông tin thành công",code:'1', user });
@@ -192,6 +201,8 @@ const getProfile = async (req, res) => {
         email: user.email,
         phone: user.phone,
         address: user.address,
+        birthday: user.birthday,
+        gender : user.gender,
         role: user.roleId ? user.roleId.name : null, // Đổi roleId thành role name
         department: user.idDepartment ? user.idDepartment.name : null, // Đổi idDepartment thành department name
         image: user.image,
@@ -205,12 +216,45 @@ const getProfile = async (req, res) => {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 };
+const getUserInfo = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+
+    if (!user) {
+      return res.json({ message: 'Người dùng không tồn tại', code: '0' });
+    }
+
+    res.json({
+      code: '1',
+      message: 'Lấy thông tin người dùng thành công',
+      user: user
+      });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
 
 const getListUserByDepartmentID = async (req, res) => {
   try {
     const { idDepartment } = req.params;
-    const users = await User.find({ idDepartment })
-      .populate('roleId', 'name') 
+    const { search } = req.query; // lấy search từ query param
+
+    let query = {};
+
+    if (search && search.trim() !== '') {
+      // Nếu có search, tìm theo cả idDepartment và fullName_no_accent
+      const normalized = removeVietnameseTones(search).toLowerCase();
+      query = {
+        idDepartment,
+        fullName_no_accent: { $regex: normalized.trim(), $options: 'i' }
+      };
+    } else {
+      // Nếu không có search, chỉ tìm theo idDepartment
+      query = { idDepartment };
+    }
+
+    const users = await User.find(query)
+      .populate('roleId', 'name')
       .populate('idDepartment', 'name');
 
     if (!users.length) {
@@ -223,6 +267,8 @@ const getListUserByDepartmentID = async (req, res) => {
       email: user.email,
       phone: user.phone,
       address: user.address,
+      birthday: user.birthday,
+      gender : user.gender,
       role: user.roleId ? user.roleId.name : null,
       department: user.idDepartment ? user.idDepartment.name : null,
       image: user.image,
@@ -236,6 +282,8 @@ const getListUserByDepartmentID = async (req, res) => {
     res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
+
+
 const searchByName = async (req, res) => {
   try {
     const name = req.query.name || "";
@@ -253,6 +301,8 @@ const searchByName = async (req, res) => {
       email: user.email,
       phone: user.phone,
       address: user.address,
+      birthday: user.birthday,
+      gender : user.gender,
       role: user.roleId ? user.roleId.name : null,
       department: user.idDepartment ? user.idDepartment.name : null,
       image: user.image,
@@ -320,6 +370,8 @@ const getProfileByUserId = async (req, res) => {
         email: user.email,
         phone: user.phone,
         address: user.address,
+        birthday: user.birthday,
+        gender : user.gender,
         role: user.roleId ? user.roleId.name : null, 
         department: user.idDepartment ? user.idDepartment.name : null, 
         image: user.image,
@@ -364,6 +416,7 @@ module.exports = {
   loginUser,
   logoutUser,
   getProfile,
+  getUserInfo,
   updateUser,
   changePassword,
   checkPassword,

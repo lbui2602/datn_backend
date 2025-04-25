@@ -92,7 +92,7 @@ async function init() {
 
     // Tạo FaceMatcher nếu có dữ liệu
     if (trainedData.length > 0) {
-        const faceMatcher = new faceapi.FaceMatcher(trainedData, 0.6);
+        const faceMatcher = new faceapi.FaceMatcher(trainedData, 0.5);
         setFaceMatcherFace(faceMatcher);
         setFaceMatcherTraining(faceMatcher);
         console.log('FaceMatcher đã được khởi tạo.');

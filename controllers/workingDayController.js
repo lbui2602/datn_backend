@@ -1,5 +1,6 @@
 const WorkingDay = require('../models/WorkingDay');
 const Attendance = require('../models/Attendance');
+const User = require('../models/User');
 const mongoose = require('mongoose');
 
 // Lấy danh sách ngày làm việc của một nhân viên
@@ -37,13 +38,63 @@ const getByUserIdAndMonthYear = async (req, res) => {
 // Lấy tất cả ngày làm việc của tất cả nhân viên
 const getAllWorkingDays = async (req, res) => {
   try {
-    const workingDays = await WorkingDay.find().populate('userId', 'name email').populate('attendances');
+    const { date, name, idDepartment } = req.body;
 
-    res.json({code:'1',workingDays});
+    // Tạo bộ lọc cho user
+    let userFilter = {};
+
+    // Ưu tiên lọc theo idDepartment trước
+    if (idDepartment && idDepartment.trim() !== "") {
+      userFilter.idDepartment = idDepartment.trim();
+    }
+
+    // Nếu có name, thêm điều kiện tìm name
+    if (name && name.trim() !== "") {
+      userFilter.fullName_no_accent = { $regex: new RegExp(name.trim(), 'i') };
+    }
+
+    // Lấy danh sách userId phù hợp
+    const users = await User.find(userFilter).select('_id');
+    const userIds = users.map(user => user._id);
+
+    // Nếu không có user phù hợp, trả về rỗng
+    if (userIds.length === 0) {
+      return res.json({
+        code: '1',
+        workingDays: []
+      });
+    }
+
+    // Tạo bộ lọc cho workingDay
+    let workingDayFilter = {
+      userId: { $in: userIds }
+    };
+
+    if (date && date.trim() !== "") {
+      workingDayFilter.date = date.trim();
+    }
+
+    // Lấy danh sách workingDays
+    const workingDays = await WorkingDay.find(workingDayFilter)
+      .populate({
+        path: 'userId',
+        select: 'name idDepartment fullName image'
+      })
+      .populate('attendances')
+      .sort({ date: -1 }) // sắp xếp theo ngày mới nhất
+      .lean();
+
+    res.json({
+      code: '1',
+      workingDays: workingDays
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Server error: '+error.message,code:'0' });
+    console.error("Lỗi server:", error);
+    res.status(500).json({ message: 'Server error: ' + error.message, code: '0' });
   }
 };
+
 const getWorkingDayById = async (req, res) => {
   try {
     const { workingDayId } = req.params;
