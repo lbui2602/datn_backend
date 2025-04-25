@@ -4,6 +4,8 @@ const Attendance = require("../models/Attendance");
 const WorkingDay = require("../models/WorkingDay");
 const FaceModel = require("../models/FaceModel");
 const path = require("path");
+const axios = require('axios');
+const FormData = require('form-data');
 const fs = require("fs");
 const fsPromises = require("fs").promises;
 const {
@@ -281,4 +283,125 @@ const verifyFace = async (req, res) => {
   }
 };
 
-module.exports = { verifyFace, setFaceMatcher };
+
+const compareFaces = async (req, res) => {
+  try {
+    const { fileName, userId, time, date } = req.body;
+    console.log("fileName:", fileName);
+
+    if (!req.file) {
+      return res.json({ message: "Không có file ảnh được gửi", code: "0" });
+    }
+
+    if (!fileName || !userId || !time || !date) {
+      return res.json({ message: "Thiếu tham số trong request", code: "0" });
+    }
+
+    // Bỏ dấu "/" ở đầu nếu có
+    const relativePath = fileName.startsWith("/") ? fileName.slice(1) : fileName;
+    const serverImagePath = path.join(__dirname, "..", relativePath);
+
+    console.log(serverImagePath)
+
+
+    // Gửi dữ liệu sang Flask
+    const formData = new FormData();
+    formData.append("image1", req.file.buffer, {
+      filename: "user.jpg",
+      contentType: req.file.mimetype,
+    });
+    formData.append("image2", fs.createReadStream(serverImagePath));
+
+    const response = await axios.post("http://localhost:5000/compare-faces", formData, {
+      headers: formData.getHeaders(),
+    });
+
+    const matched = response.data?.matched;
+
+    if (!matched) {
+      return res.json({
+        message: "Xác thực khuôn mặt không trùng khớp!",
+        code: "0"
+      });
+    }
+
+    // Nếu matched === true => tiếp tục ghi attendance
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const ext = path.extname(req.file.originalname);
+    const filename = `attendance_${timestamp}${ext}`;
+    const uploadDir = path.join(__dirname, "..", "uploads", "attendance");
+    const uploadPath = path.join(uploadDir, filename);
+    const imagePath = "/uploads/attendance/" + filename;
+
+    await fsPromises.mkdir(uploadDir, { recursive: true });
+    await fsPromises.writeFile(uploadPath, req.file.buffer);
+
+    // Tìm hoặc tạo mới WorkingDay
+    let workingDay = await WorkingDay.findOne({ userId, date }).populate("attendances");
+
+    if (!workingDay) {
+      workingDay = await WorkingDay.create({
+        userId,
+        date,
+        attendances: [],
+        totalHours: 0,
+        status: compareTime(time, "08:00") > 0 ? 0 : 1,
+      });
+    }
+
+    workingDay.totalHours = Number(workingDay.totalHours) || 0;
+
+    const lastAttendance =
+      workingDay.attendances.length > 0
+        ? await Attendance.findById(
+            workingDay.attendances[workingDay.attendances.length - 1]
+          )
+        : null;
+
+    let type = "check_in";
+    if (lastAttendance && lastAttendance.type === "check_in") {
+      type = "check_out";
+    }
+
+    const attendance = await Attendance.create({
+      userId,
+      date,
+      time,
+      type,
+      image: imagePath,
+    });
+
+    workingDay.attendances.push(attendance._id);
+
+    if (type === "check_out" && lastAttendance) {
+      const hoursWorked = calculateHours(
+        adjustTime(lastAttendance.time),
+        adjustTime(time)
+      );
+      if (!isNaN(hoursWorked) && hoursWorked > 0) {
+        workingDay.totalHours = Number(
+          (workingDay.totalHours + hoursWorked).toFixed(2)
+        );
+      }
+    }
+
+    await workingDay.save();
+
+    const updatedWorkingDay = await WorkingDay.findOne({ userId, date })
+      .populate("attendances")
+      .lean();
+
+    res.json({
+      message: "Xác thực thành công và đã điểm danh!",
+      code: "1",
+      attendance: attendance,
+      attendances: updatedWorkingDay.attendances,
+      totalHours: updatedWorkingDay.totalHours,
+    });
+  } catch (error) {
+    console.error("Chi tiết lỗi:", error.response?.data || error.message);
+    res.json({ message: error.response?.data || error.message, code: "0" });
+  }
+};
+
+module.exports = { verifyFace, setFaceMatcher, compareFaces };

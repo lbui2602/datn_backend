@@ -3,6 +3,8 @@ const canvas = require('canvas');
 const FaceModel = require('../models/FaceModel');
 const User = require('../models/User');
 const path = require('path');
+const axios = require('axios');
+const FormData = require('form-data');
 const fs = require('fs');
 const { setFaceMatcher: setFaceMatcherFace } = require('./faceController');
 
@@ -91,5 +93,62 @@ const uploadFiles = async (req, res) => {
   }
 };
 
+const training = async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) {
+      return res.json({code : "0",message:"Vui lòng gửi tên"});
+    }
 
-module.exports = { uploadFiles, setFaceMatcher, loadTrainingDataForLabel, trainedData };
+    if (!req.file) {
+      return res.status(400).json({ message: "Không có file ảnh được gửi", code: "0" });
+    }
+
+    const formData = new FormData();
+    formData.append("image", req.file.buffer, {
+      filename: "user.jpg",
+      contentType: req.file.mimetype,
+    });
+
+    const response = await axios.post("http://localhost:5000/detect-face", formData, {
+      headers: formData.getHeaders(),
+    });
+
+    const face_detected = response.data?.face_detected;
+
+    if (!face_detected) {
+      return res.json({
+        message: "false",
+        code: "0"
+      });
+    }
+
+    // ✅ Nếu phát hiện khuôn mặt, lưu ảnh và cập nhật user
+    const imageBuffer = req.file.buffer;
+
+    const uploadsDir = path.join(__dirname, '../uploads/avatar');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const filePath = path.join(uploadsDir, `${name}.jpg`);
+    fs.writeFileSync(filePath, imageBuffer);
+
+    const avatarPath = `/uploads/avatar/${name}.jpg`;
+
+    const user = await User.findById(name);
+    
+    if (user) {
+      user.image = avatarPath;
+      await user.save();
+    }
+
+    res.json({code : "1",message:"'Upload, huấn luyện dữ liệu và lưu avatar thành công!'"});
+
+  } catch (error) {
+    console.error("Chi tiết lỗi:", error.response?.data || error.message);
+    res.status(500).json({ message: error.response?.data || error.message, code: "0" });
+  }
+};
+
+module.exports = { uploadFiles, setFaceMatcher, loadTrainingDataForLabel, trainedData, training };
