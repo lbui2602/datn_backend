@@ -192,3 +192,84 @@ exports.getGroupByUserId2 = async (req, res) => {
   }
 };
 
+exports.deleteUser = async (req, res) => {
+  try {
+    const { groupId, userId } = req.body; // lấy groupId và userId từ body
+
+    // Tìm group theo groupId
+    const group = await Group.findById(groupId);
+
+    if (!group) {
+      return res.json({ code: '0', message: 'Không tìm thấy nhóm' });
+    }
+
+    // Xóa userId khỏi danh sách members
+    group.members = group.members.filter(memberId => memberId.toString() !== userId.toString());
+
+    if (group.members.length === 0) {
+      // Nếu không còn thành viên nào, xóa group
+      await Group.findByIdAndDelete(groupId);
+      return res.json({ code: '1', message: 'Xóa thành công. Nhóm không còn thành viên nên đã bị xóa.' });
+    } else {
+      // Còn thành viên khác, cập nhật group
+      await group.save();
+      return res.json({ code: '1', message: 'Xóa thành viên khỏi nhóm thành công.' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ code: '0', message: 'Lỗi khi xóa thành viên khỏi nhóm', error });
+  }
+};
+
+exports.addUserToGroup = async (req, res) => {
+  try {
+    const { groupId, userId } = req.body; // nhận groupId và userId từ body
+
+    const group = await Group.findById(groupId);
+
+    if (!group) {
+      return res.json({ code: '0', message: 'Không tìm thấy nhóm' });
+    }
+
+    const isUserExist = group.members.some(memberId => memberId.toString() === userId.toString());
+    if (isUserExist) {
+      return res.json({ code: '0', message: 'Người dùng đã có trong nhóm' });
+    }
+
+    // Thêm userId vào danh sách members
+    group.members.push(userId);
+
+    // Lưu group lại
+    await group.save();
+
+    res.json({ code: '1', message: 'Thêm người dùng vào nhóm thành công', group });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ code: '0', message: 'Lỗi khi thêm người dùng vào nhóm', error });
+  }
+};
+
+exports.getUserByGroupId = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    // Tìm group theo ID
+    const group = await Group.findById(groupId).lean();
+
+    if (!group) {
+      return res.json({ code: '0', message: 'Không tìm thấy nhóm' });
+    }
+
+    // Lấy danh sách user theo các memberId trong group
+    const users = await User.find({ _id: { $in: group.members } }).select('-password').lean();
+
+    res.json({
+      code: '1',
+      message: 'Lấy danh sách thành viên nhóm thành công',
+      users: users
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ code: '0', message: 'Lỗi khi lấy danh sách thành viên nhóm', error });
+  }
+};
