@@ -42,6 +42,7 @@ exports.getGroupById = async (req, res) => {
 
     // Kiểm tra xem có phải nhóm private không
     if (group.name.startsWith("private_") && group.members.length === 2) {
+      group.isPrivate = true
       const userId = req.user.id; // lấy user hiện tại (đã gán vào req.user từ middleware auth)
       const otherUserId = group.members.find(id => id.toString() !== userId.toString());
 

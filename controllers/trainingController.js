@@ -118,7 +118,7 @@ const training = async (req, res) => {
 
     if (!face_detected) {
       return res.json({
-        message: "false",
+        message: "Không tìm thấy khuôn mặt trong ảnh!",
         code: "0"
       });
     }

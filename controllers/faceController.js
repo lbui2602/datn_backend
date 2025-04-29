@@ -4,8 +4,8 @@ const Attendance = require("../models/Attendance");
 const WorkingDay = require("../models/WorkingDay");
 const FaceModel = require("../models/FaceModel");
 const path = require("path");
-const axios = require('axios');
-const FormData = require('form-data');
+const axios = require("axios");
+const FormData = require("form-data");
 const fs = require("fs");
 const fsPromises = require("fs").promises;
 const {
@@ -230,8 +230,8 @@ const verifyFace = async (req, res) => {
     const lastAttendance =
       workingDay.attendances.length > 0
         ? await Attendance.findById(
-          workingDay.attendances[workingDay.attendances.length - 1]
-        )
+            workingDay.attendances[workingDay.attendances.length - 1]
+          )
         : null;
 
     let type = "check_in";
@@ -283,7 +283,6 @@ const verifyFace = async (req, res) => {
   }
 };
 
-
 const compareFaces = async (req, res) => {
   try {
     const { fileName, userId, time, date } = req.body;
@@ -298,11 +297,12 @@ const compareFaces = async (req, res) => {
     }
 
     // Bỏ dấu "/" ở đầu nếu có
-    const relativePath = fileName.startsWith("/") ? fileName.slice(1) : fileName;
+    const relativePath = fileName.startsWith("/")
+      ? fileName.slice(1)
+      : fileName;
     const serverImagePath = path.join(__dirname, "..", relativePath);
 
-    console.log(serverImagePath)
-
+    console.log(serverImagePath);
 
     // Gửi dữ liệu sang Flask
     const formData = new FormData();
@@ -312,16 +312,20 @@ const compareFaces = async (req, res) => {
     });
     formData.append("image2", fs.createReadStream(serverImagePath));
 
-    const response = await axios.post("http://0.0.0.0:5000/compare-faces", formData, {
-      headers: formData.getHeaders(),
-    });
+    const response = await axios.post(
+      "http://0.0.0.0:5000/compare-faces",
+      formData,
+      {
+        headers: formData.getHeaders(),
+      }
+    );
 
     const matched = response.data?.matched;
 
     if (!matched) {
       return res.json({
         message: "Xác thực khuôn mặt không trùng khớp!",
-        code: "0"
+        code: "0",
       });
     }
 
@@ -337,7 +341,9 @@ const compareFaces = async (req, res) => {
     await fsPromises.writeFile(uploadPath, req.file.buffer);
 
     // Tìm hoặc tạo mới WorkingDay
-    let workingDay = await WorkingDay.findOne({ userId, date }).populate("attendances");
+    let workingDay = await WorkingDay.findOne({ userId, date }).populate(
+      "attendances"
+    );
 
     if (!workingDay) {
       workingDay = await WorkingDay.create({
@@ -399,8 +405,20 @@ const compareFaces = async (req, res) => {
       totalHours: updatedWorkingDay.totalHours,
     });
   } catch (error) {
-    console.error("Chi tiết lỗi:", error.response?.data || error.message);
-    res.json({ message: error.response?.data || error.message, code: "0" });
+    let errorMessage = "";
+
+    if (
+      typeof error.response?.data === "object" &&
+      error.response?.data?.error
+    ) {
+      // Nếu data là object và có field 'error'
+      errorMessage = error.response.data.error;
+    } else {
+      // Nếu không thì lấy toString hoặc message
+      errorMessage = error.response?.data?.toString() || error.message;
+    }
+
+    res.json({ message: errorMessage, code: "0" });
   }
 };
 
