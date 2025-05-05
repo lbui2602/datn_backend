@@ -401,7 +401,7 @@ const compareFaces = async (req, res) => {
       message: "Xác thực thành công và đã điểm danh!",
       code: "1",
       attendance: attendance,
-      attendances: updatedWorkingDay.attendances,
+      attendances: updatedWorkingDay.attendances.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
       totalHours: updatedWorkingDay.totalHours,
     });
   } catch (error) {

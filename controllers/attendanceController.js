@@ -96,7 +96,7 @@ function adjustTime(inputTime) {
 const getAttendanceByUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const attendances = await Attendance.find({ userId }).sort({ date: -1 });
+    const attendances = await Attendance.find({ userId }).sort({ createdAt: -1 });
 
     res.json({ code: '1', attendances });
   } catch (error) {
@@ -134,7 +134,7 @@ const getAttendanceByUserIdAndDate = async (req, res) => {
     }
     res.json({
       code: '1',
-      attendances: workingDay.attendances,
+      attendances: workingDay.attendances.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
       totalHours: Number(workingDay.totalHours) || 0
     });
   } catch (error) {
