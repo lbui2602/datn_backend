@@ -107,6 +107,7 @@ const loginUser = async (req, res) => {
       roleId: user.roleId,
       idDepartment: user.idDepartment,
       image: user.image,
+      status : user.status,
       token: generateToken(user.id, user.roleId),
     });
   } catch (error) {
