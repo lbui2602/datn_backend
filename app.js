@@ -58,7 +58,7 @@ const loadTrainingDataFromDB = async () => {
             return new faceapi.LabeledFaceDescriptors(face.label, descriptors);
         });
     } catch (err) {
-        console.error('Lỗi khi tải dữ liệu từ MongoDB:', err);
+      
         return [];
     }
 };
@@ -69,9 +69,9 @@ async function initModels() {
         await faceapi.nets.ssdMobilenetv1.loadFromDisk(modelsPath);
         await faceapi.nets.faceRecognitionNet.loadFromDisk(modelsPath);
         await faceapi.nets.faceLandmark68Net.loadFromDisk(modelsPath);
-        console.log('Mô hình nhận diện đã được tải xong.');
+      
     } catch (err) {
-        console.error('Lỗi khi tải các mô hình nhận diện:', err);
+       
     }
 }
 
@@ -83,21 +83,17 @@ async function init() {
     const faceDescriptorsFromDB = await loadTrainingDataFromDB();
 
     if (faceDescriptorsFromDB.length === 0) {
-        console.warn('Không có dữ liệu huấn luyện trong MongoDB.');
     }
 
     // Gán dữ liệu đã huấn luyện
     trainedData.splice(0, trainedData.length, ...faceDescriptorsFromDB);
-    console.log('Dữ liệu huấn luyện đã được tải:', trainedData);
 
     // Tạo FaceMatcher nếu có dữ liệu
     if (trainedData.length > 0) {
         const faceMatcher = new faceapi.FaceMatcher(trainedData, 0.5);
         setFaceMatcherFace(faceMatcher);
         setFaceMatcherTraining(faceMatcher);
-        console.log('FaceMatcher đã được khởi tạo.');
     } else {
-        console.warn('FaceMatcher không được khởi tạo do thiếu dữ liệu.');
     }
 }
 

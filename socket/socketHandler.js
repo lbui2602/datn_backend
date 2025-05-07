@@ -6,8 +6,6 @@ let ioGlobal = null;
 module.exports = (io) => {
   ioGlobal = io;
   io.on("connection", (socket) => {
-    console.log(`🔵 User connected: ${socket.id}`);
-
     // Lưu danh sách group mà user tham gia
     socket.userGroups = new Set();
 
@@ -28,8 +26,6 @@ module.exports = (io) => {
         onlineUsers.set(userId, new Set());
       }
       onlineUsers.get(userId).add(socket.id);
-
-      console.log(`✅ User ${userId} connected with socket ${socket.id}`);
     });
 
     // Khi client yêu cầu join group
@@ -37,26 +33,19 @@ module.exports = (io) => {
       if (!socket.rooms.has(groupId)) {
         socket.join(groupId);
         socket.userGroups.add(groupId);
-        console.log(`✅ User ${socket.id} joined group ${groupId}`);
-        console.log("📢 Users in group:", groupId, io.sockets.adapter.rooms.get(groupId));
       } else {
-        console.log(`⚠️ User ${socket.id} already in group ${groupId}`);
       }
     });
 
     // Khi client gửi tin nhắn
     socket.on("send_message", async (data) => {
       try {
-        console.log("📤 Received send_message:", data);
-
         if (!data.groupId || !data.senderId || !data.message) {
           return console.log("❌ Missing message data");
         }
 
         // Tạo tin nhắn mới
-        const newMessage = await MessageController.createMessage(data);
-        console.log("✅ Message created:", newMessage);
-
+        const newMessage = await MessageController.createMessage(data)
         // Populate thông tin người gửi
         const populatedMessage = await Message.findById(newMessage._id)
           .populate("senderId", "fullName image")
@@ -65,11 +54,6 @@ module.exports = (io) => {
         if (!populatedMessage) {
           return console.log("❌ Could not find message after creation.");
         }
-
-        console.log(
-          "📢 Users in group before sending message:",
-          io.sockets.adapter.rooms.get(data.groupId)
-        );
 
         // Gửi message tới tất cả thành viên trong group
         io.to(data.groupId).emit("receive_message", {
@@ -82,16 +66,12 @@ module.exports = (io) => {
           createdAt: populatedMessage.createdAt,
           updatedAt: populatedMessage.updatedAt,
         });
-
-        console.log(`📩 Message sent to group ${data.groupId}`);
       } catch (error) {
-        console.error("❌ Error sending message:", error);
       }
     });
 
     // Khi client disconnect
     socket.on('disconnect', () => {
-      console.log(`🔴 User disconnected: ${socket.id}`);
 
       // Duyệt hết Map
       for (const [userId, socketSet] of onlineUsers.entries()) {
@@ -103,7 +83,6 @@ module.exports = (io) => {
             onlineUsers.delete(userId);
           }
 
-          console.log(`🚪 User ${socket.id} left group ${userId}`);
           break; // Vì một socket.id chỉ nằm ở 1 user nên break luôn
         }
       }
@@ -126,7 +105,6 @@ function mapToObject(map) {
 
 function emitBlockAccount(userId) {
   if (!ioGlobal) {
-    console.error("❌ io is not initialized");
     return;
   }
   const sockets = onlineUsers.get(userId);
@@ -137,7 +115,6 @@ function emitBlockAccount(userId) {
         socket.emit('block_account', { userId });
       }
     }
-    console.log(`🚫 Emit block_account to user ${userId}`);
   }
 }
 
