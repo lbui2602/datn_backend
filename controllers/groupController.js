@@ -10,6 +10,7 @@ exports.getGroups = async (req, res) => {
 
 // Tạo nhóm mới
 exports.createGroup = async (req, res) => {
+  const owner = req.user.id
   const { name, members } = req.body;
 
   try {
@@ -20,7 +21,7 @@ exports.createGroup = async (req, res) => {
     }
 
     // nếu chưa có thì tạo mới
-    const newGroup = new Group({ name, members });
+    const newGroup = new Group({ name, owner, members });
     await newGroup.save();
     res.json({ code: "1", newGroup });
   } catch (err) {
@@ -195,32 +196,39 @@ exports.getGroupByUserId2 = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
-    const { groupId, userId } = req.body; // lấy groupId và userId từ body
+    const { groupId, userId } = req.body;
 
-    // Tìm group theo groupId
     const group = await Group.findById(groupId);
 
     if (!group) {
       return res.json({ code: '0', message: 'Không tìm thấy nhóm' });
     }
 
-    // Xóa userId khỏi danh sách members
+    // Xóa user khỏi danh sách members
     group.members = group.members.filter(memberId => memberId.toString() !== userId.toString());
 
+    const isOwner = group.owner.toString() === userId.toString();
+
     if (group.members.length === 0) {
-      // Nếu không còn thành viên nào, xóa group
+      // Không còn ai trong nhóm => xóa nhóm
       await Group.findByIdAndDelete(groupId);
       return res.json({ code: '1', message: 'Xóa thành công. Nhóm không còn thành viên nên đã bị xóa.' });
-    } else {
-      // Còn thành viên khác, cập nhật group
-      await group.save();
-      return res.json({ code: '1', message: 'Xóa thành viên khỏi nhóm thành công.' });
     }
+
+    if (isOwner) {
+      // Gán owner mới là thành viên đầu tiên trong danh sách còn lại
+      group.owner = group.members[0];
+    }
+
+    await group.save();
+    return res.json({ code: '1', message: isOwner ? 'Xóa thành công. Chủ nhóm đã được thay đổi.' : 'Xóa thành viên khỏi nhóm thành công.' });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ code: '0', message: 'Lỗi khi xóa thành viên khỏi nhóm', error });
   }
 };
+
 
 exports.addUserToGroup = async (req, res) => {
   try {
