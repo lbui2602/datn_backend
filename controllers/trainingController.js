@@ -101,7 +101,7 @@ const training = async (req, res) => {
     }
 
     if (!req.file) {
-      return res.status(400).json({ message: "Không có file ảnh được gửi", code: "0" });
+      return res.json({ message: "Không có file ảnh được gửi", code: "0" });
     }
 
     const formData = new FormData();
@@ -118,7 +118,7 @@ const training = async (req, res) => {
 
     if (!face_detected) {
       return res.json({
-        message: "Không tìm thấy khuôn mặt trong ảnh!",
+        message: "Không tìm thấy khuôn mặt trong ảnh.",
         code: "0"
       });
     }
@@ -147,7 +147,7 @@ const training = async (req, res) => {
 
   } catch (error) {
     console.error("Chi tiết lỗi:", error.response?.data || error.message);
-    res.status(500).json({ message: error.response?.data || error.message, code: "0" });
+    res.json({ message: error.response?.data || error.message, code: "0" });
   }
 };
 

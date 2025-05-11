@@ -398,27 +398,19 @@ const compareFaces = async (req, res) => {
       .lean();
 
     res.json({
-      message: "Xác thực thành công và đã điểm danh!",
+      message: "Xác thực thành công và đã điểm danh",
       code: "1",
       attendance: attendance,
       attendances: updatedWorkingDay.attendances.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
       totalHours: updatedWorkingDay.totalHours,
     });
   } catch (error) {
-    let errorMessage = "";
-
-    if (
-      typeof error.response?.data === "object" &&
-      error.response?.data?.error
-    ) {
-      // Nếu data là object và có field 'error'
-      errorMessage = error.response.data.error;
-    } else {
-      // Nếu không thì lấy toString hoặc message
-      errorMessage = error.response?.data?.toString() || error.message;
-    }
-
-    res.json({ message: errorMessage, code: "0" });
+    const message = error?.response?.data?.detail || "Lỗi không xác định";
+    console.log(message)
+    return res.json({
+      message,
+      code: "0",
+    });
   }
 };
 
