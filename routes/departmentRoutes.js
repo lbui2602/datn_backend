@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.get('/', getDepartments);      
 router.get('/:id',protect(), getDepartmentById);      
-router.post('/', createDepartment);        
+router.post('/',protect(), createDepartment);        
 router.put('/:id',protect(), updateDepartment);       
 router.delete('/:id',protect(), deleteDepartment);    
 

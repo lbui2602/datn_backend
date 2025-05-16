@@ -25,17 +25,26 @@ const getDepartmentById = async (req, res) => {
 // Thêm phòng ban
 const createDepartment = async (req, res) => {
   try {
-    const { _id,name } = req.body;
-    // Kiểm tra phòng ban đã tồn tại chưa
-    const departmentExists = await Department.findOne({ name });
-    if (departmentExists) return res.json({ message: 'Phòng ban đã tồn tại',code:'0' });
+    const { _id, name } = req.body;
+    // Kiểm tra trùng theo _id
+    const departmentById = await Department.findById(_id);
+    if (departmentById) {
+      return res.json({ message: 'Phòng ban đã tồn tại', code: '0' });
+    }
 
-    const department = await Department.create({ _id,name });
-    res.json({code:'1',department});
+    // Kiểm tra trùng theo name
+    const departmentByName = await Department.findOne({ name });
+    if (departmentByName) {
+      return res.json({ message: 'Phòng ban đã tồn tại', code: '0' });
+    }
+
+    const department = await Department.create({ _id, name });
+    res.json({ code: '1', message: 'Tạo phòng ban thành công', department });
   } catch (error) {
-    res.status(500).json({ message: 'Server error: '+error.message, code:'0' });
+    res.status(500).json({ message: 'Server error: ' + error.message, code: '0' });
   }
 };
+
 
 // Cập nhật phòng ban
 const updateDepartment = async (req, res) => {
