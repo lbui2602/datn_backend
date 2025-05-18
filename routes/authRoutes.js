@@ -14,11 +14,13 @@ const {
   getProfileByUserId,
   uploadAvatar,
   acceptUser,
-  searchByName
+  searchByName,
+  registerAdmin
 } = require('../controllers/authController');
 const upload = require('../middleware/uploadAvatarMiddleware');
 const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
+router.post('/register/admin', registerAdmin);
 router.post('/register', registerUser);
 router.post('/uploadAvatar', upload.single('image_file'), uploadAvatar);
 router.post('/login', loginUser);
@@ -31,6 +33,6 @@ router.post('/check-password', protect(), checkPassword);
 router.get('/staff/:idDepartment', protect(), getListUserByDepartmentID);
 router.get('/search', protect(), searchByName);
 router.get('/getAll/:userId', protect(), getAllUser);
-router.get('getProfileByUserId/:userId', protect(), getProfileByUserId);
+router.get('/getProfileByUserId/:userId', protect(), getProfileByUserId);
 router.put('/accept',protect(["giam_doc","truong_phong"]), acceptUser);
 module.exports = router;

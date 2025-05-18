@@ -108,6 +108,7 @@ const loginUser = async (req, res) => {
       idDepartment: user.idDepartment,
       image: user.image,
       status : user.status,
+      isAdmin : user.isAdmin,
       token: generateToken(user.id, user.roleId),
     });
   } catch (error) {
@@ -117,7 +118,7 @@ const loginUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
       const { _id,fullName, phone, address, roleId, idDepartment, birthday, gender } = req.body;
-      const user = await User.findById(_id); // Lấy id từ token
+      const user = await User.findById(_id); 
 
       if (!user) return res.json({ message: "Không tìm thấy người dùng!",code:'0' });
 
@@ -355,8 +356,6 @@ const getProfileByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId)
-      .populate('roleId', 'name') // Lấy tên role từ bảng Role
-      .populate('idDepartment', 'name'); // Lấy tên department từ bảng Department
 
     if (!user) {
       return res.json({ message: 'Người dùng không tồn tại', code: '0' });
@@ -365,22 +364,7 @@ const getProfileByUserId = async (req, res) => {
     res.json({
       code: '1',
       message: 'Lấy thông tin người dùng thành công',
-      user: {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        address: user.address,
-        birthday: user.birthday,
-        gender : user.gender,
-        role: user.roleId ? user.roleId.name : null, 
-        department: user.idDepartment ? user.idDepartment.name : null, 
-        image: user.image,
-        status: user.status,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        __v:user.__v
-      }
+      user: user
     });
   } catch (error) {
     res.status(500).json({ message: "Server error: "+error.message, code:'0'});
@@ -412,6 +396,49 @@ const uploadAvatar = async (req, res) => {
   }
 };
 
+const registerAdmin = async (req, res) => {
+  try {
+    const { fullName, email, password, phone } = req.body;
+
+    // Kiểm tra các trường bắt buộc
+    if (!fullName || !email || !password || !phone) {
+      return res.json({ message: 'Vui lòng nhập đầy đủ thông tin bắt buộc!', code: '0' });
+    }
+
+    // Kiểm tra định dạng email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.json({ message: 'Email không hợp lệ!', code: '0' });
+    }
+
+    // Kiểm tra email đã tồn tại chưa
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.json({ message: 'Email đã tồn tại!', code: '0' });
+    }
+
+    // Chuyển tên không dấu
+    const fullName_no_accent = removeVietnameseTones(fullName);
+
+    const newAdmin = new User({
+      fullName,
+      fullName_no_accent,
+      email,
+      password,
+      phone,
+      status: true,       // ✅ Mặc định true
+      isAdmin: true        // ✅ Luôn là true
+    });
+
+    await newAdmin.save();
+
+    res.json({ message: 'Đăng ký admin thành công!', code: '1', user: newAdmin });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: ' + error.message, code: '0' });
+  }
+};
+
+
 module.exports = {
   registerUser,
   loginUser,
@@ -426,5 +453,6 @@ module.exports = {
   getProfileByUserId,
   uploadAvatar,
   acceptUser,
-  searchByName
+  searchByName,
+  registerAdmin
 };
