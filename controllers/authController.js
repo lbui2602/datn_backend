@@ -426,7 +426,7 @@ const registerAdmin = async (req, res) => {
       email,
       password,
       phone,
-      status: true,       // ✅ Mặc định true
+      status: false,       // ✅ Mặc định true
       isAdmin: true        // ✅ Luôn là true
     });
 
