@@ -143,7 +143,7 @@ const training = async (req, res) => {
       await user.save();
     }
 
-    res.json({code : "1",message:"'Upload, huấn luyện dữ liệu và lưu avatar thành công!'"});
+    res.json({code : "1",message:"Tải ảnh đại diện thành công."});
 
   } catch (error) {
     console.error("Chi tiết lỗi:", error.response?.data || error.message);

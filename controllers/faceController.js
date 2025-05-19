@@ -292,6 +292,10 @@ const compareFaces = async (req, res) => {
       return res.json({ message: "Không có file ảnh được gửi", code: "0" });
     }
 
+    if (fileName == null) {
+      return res.json({ message: "Vui lòng tải ảnh đại diện", code: "0" });
+    }
+
     if (!fileName || !userId || !time || !date) {
       return res.json({ message: "Thiếu tham số trong request", code: "0" });
     }
@@ -401,12 +405,14 @@ const compareFaces = async (req, res) => {
       message: "Xác thực thành công và đã điểm danh",
       code: "1",
       attendance: attendance,
-      attendances: updatedWorkingDay.attendances.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+      attendances: updatedWorkingDay.attendances.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      ),
       totalHours: updatedWorkingDay.totalHours,
     });
   } catch (error) {
     const message = error?.response?.data?.detail || "Lỗi không xác định";
-    console.log(message)
+    console.log(message);
     return res.json({
       message,
       code: "0",
