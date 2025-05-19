@@ -176,11 +176,77 @@ const getTotalAttendance = async (req, res) => {
   }
 };
 
+// Lấy tất cả ngày làm việc với bộ lọc
+const getAllWorkingDaysWithFilter = async (req, res) => {
+  try {
+    const { monthYear, name, idDepartment } = req.body;
+
+    // Tạo bộ lọc cho user
+    let userFilter = {};
+
+    // Ưu tiên lọc theo idDepartment trước
+    if (idDepartment && idDepartment.trim() !== "") {
+      userFilter.idDepartment = idDepartment.trim();
+    }
+
+    // Nếu có name, thêm điều kiện tìm name
+    if (name && name.trim() !== "") {
+      userFilter.fullName_no_accent = { $regex: new RegExp(name.trim(), 'i') };
+    }
+
+    // Lấy danh sách userId phù hợp
+    const users = await User.find(userFilter).select('_id');
+    const userIds = users.map(user => user._id);
+
+    // Nếu không có user phù hợp, trả về rỗng
+    if (userIds.length === 0) {
+      return res.json({
+        code: '1',
+        workingDays: []
+      });
+    }
+
+    // Tạo bộ lọc cho workingDay
+    let workingDayFilter = {
+      userId: { $in: userIds }
+    };
+
+    if (monthYear) {
+      const [month, year] = monthYear.split('-');
+      const monthStr = month.padStart(2, '0');
+      const yearStr = year.toString();
+      const dateRegex = new RegExp(`^\\d{2}-${monthStr}-${yearStr}$`);
+      workingDayFilter.date = { $regex: dateRegex };
+    }
+
+    // Lấy danh sách workingDays
+    const workingDays = await WorkingDay.find(workingDayFilter)
+      .populate({
+        path: 'userId',
+        select: 'name idDepartment fullName image'
+      })
+      .populate('attendances')
+      .sort({ date: -1 }) // sắp xếp theo ngày mới nhất
+      .lean();
+
+    res.json({
+      code: '1',
+      workingDays: workingDays
+    });
+
+  } catch (error) {
+    console.error("Lỗi server:", error);
+    res.status(500).json({ message: 'Server error: ' + error.message, code: '0' });
+  }
+};
+
 module.exports = { 
   getWorkingDaysByUser, 
   getAllWorkingDays, 
   calculateWorkingHours, 
   getTotalAttendance,
   getByUserIdAndMonthYear,
-  getWorkingDayById };
+  getWorkingDayById,
+  getAllWorkingDaysWithFilter 
+};
 
