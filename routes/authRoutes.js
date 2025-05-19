@@ -15,7 +15,8 @@ const {
   uploadAvatar,
   acceptUser,
   searchByName,
-  registerAdmin
+  registerAdmin,
+  deleteUser
 } = require('../controllers/authController');
 const upload = require('../middleware/uploadAvatarMiddleware');
 const { protect } = require('../middleware/authMiddleware');
@@ -34,5 +35,6 @@ router.get('/staff/:idDepartment', protect(), getListUserByDepartmentID);
 router.get('/search', protect(), searchByName);
 router.get('/getAll/:userId', protect(), getAllUser);
 router.get('/getProfileByUserId/:userId', protect(), getProfileByUserId);
-router.put('/accept',protect(["giam_doc","truong_phong"]), acceptUser);
+router.put('/accept',protect(), acceptUser);
+router.delete('/delete/:userId',protect(), deleteUser);
 module.exports = router;

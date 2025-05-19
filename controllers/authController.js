@@ -438,6 +438,22 @@ const registerAdmin = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+    const { userId } = req.params;
+    console.log(userId)
+    try {
+        const deletedUser = await User.findByIdAndDelete(userId);
+
+        if (!deletedUser) {
+            return res.json({ message: 'Người dùng không tồn tại', code: '0'});
+        }
+
+        res.json({ message: 'Xóa người dùng thành công',  code: '1' });
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi server', error: error.message, code: '0' });
+    }
+};
+
 
 module.exports = {
   registerUser,
@@ -454,5 +470,6 @@ module.exports = {
   uploadAvatar,
   acceptUser,
   searchByName,
-  registerAdmin
+  registerAdmin,
+  deleteUser
 };
