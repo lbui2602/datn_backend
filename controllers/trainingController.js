@@ -12,37 +12,37 @@ let trainedData = [];
 let faceMatcher;
 
 const saveTrainingDataToDB = async (labeledFaceDescriptor) => {
-    const { label, descriptors } = labeledFaceDescriptor;
-    const descriptorsArray = descriptors.map((desc) => Array.from(desc));
+  const { label, descriptors } = labeledFaceDescriptor;
+  const descriptorsArray = descriptors.map((desc) => Array.from(desc));
 
-    await FaceModel.findOneAndUpdate(
-        { label },
-        { label, descriptors: descriptorsArray },
-        { upsert: true, new: true }
-    );
+  await FaceModel.findOneAndUpdate(
+    { label },
+    { label, descriptors: descriptorsArray },
+    { upsert: true, new: true }
+  );
 };
 
 const setFaceMatcher = (matcher) => {
-    faceMatcher = matcher;
+  faceMatcher = matcher;
 };
 
 const loadTrainingDataForLabel = async (label, imageBuffer) => {
-    const descriptors = [];
+  const descriptors = [];
 
-    try {
-        const image = await canvas.loadImage(imageBuffer);
-        const detection = await faceapi
-            .detectSingleFace(image)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
-        if (detection) {
-            descriptors.push(detection.descriptor);
-        }
-    } catch (error) {
-        console.error(`Lỗi khi xử lý ảnh của ${label}:`, error);
+  try {
+    const image = await canvas.loadImage(imageBuffer);
+    const detection = await faceapi
+      .detectSingleFace(image)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+    if (detection) {
+      descriptors.push(detection.descriptor);
     }
+  } catch (error) {
+    console.error(`Lỗi khi xử lý ảnh của ${label}:`, error);
+  }
 
-    return new faceapi.LabeledFaceDescriptors(label, descriptors);
+  return new faceapi.LabeledFaceDescriptors(label, descriptors);
 };
 
 
@@ -52,14 +52,14 @@ const uploadFiles = async (req, res) => {
     const file = req.file;
 
     if (!name || !file) {
-      return res.json({code : "0",message:"Vui lòng tải file"});
+      return res.json({ code: "0", message: "Vui lòng tải file" });
     }
 
     const imageBuffer = file.buffer;
     const newTrainingData = await loadTrainingDataForLabel(name, imageBuffer);
 
     if (!newTrainingData.descriptors.length) {
-      return res.json({code : "0",message:"Không phát hiện khuôn mặt'"});
+      return res.json({ code: "0", message: "Không phát hiện khuôn mặt'" });
     }
 
     await saveTrainingDataToDB(newTrainingData);
@@ -86,10 +86,10 @@ const uploadFiles = async (req, res) => {
       await user.save();
     }
 
-    res.json({code : "1",message:"'Upload, huấn luyện dữ liệu và lưu avatar thành công!'"});
+    res.json({ code: "1", message: "'Upload, huấn luyện dữ liệu và lưu avatar thành công!'" });
   } catch (error) {
     console.error('Lỗi khi upload file:', error);
-    return res.json({code : "0",message:error.error});
+    return res.json({ code: "0", message: error.error });
   }
 };
 
@@ -97,7 +97,7 @@ const training = async (req, res) => {
   try {
     const { name } = req.body;
     if (!name) {
-      return res.json({code : "0",message:"Vui lòng gửi tên"});
+      return res.json({ code: "0", message: "Vui lòng gửi tên" });
     }
 
     if (!req.file) {
@@ -115,12 +115,21 @@ const training = async (req, res) => {
     });
 
     const face_detected = response.data?.face_detected;
+    const length = response.data?.length;
 
     if (!face_detected) {
-      return res.json({
-        message: "Không tìm thấy khuôn mặt trong ảnh.",
-        code: "0"
-      });
+      if (length > 1) {
+        return res.json({
+          message: "Vui lòng chỉ để 1 khuôn mặt trong khung hình.",
+          code: "0"
+        });
+      }
+      else{
+        return res.json({
+          message: "Không tìm thấy khuôn mặt trong ảnh.",
+          code: "0"
+        });
+      }
     }
 
     // ✅ Nếu phát hiện khuôn mặt, lưu ảnh và cập nhật user
@@ -137,13 +146,13 @@ const training = async (req, res) => {
     const avatarPath = `/uploads/avatar/${name}.jpg`;
 
     const user = await User.findById(name);
-    
+
     if (user) {
       user.image = avatarPath;
       await user.save();
     }
 
-    res.json({code : "1",message:"Tải ảnh đại diện thành công."});
+    res.json({ code: "1", message: "Tải ảnh đại diện thành công." });
 
   } catch (error) {
     console.error("Chi tiết lỗi:", error.response?.data || error.message);
