@@ -109,6 +109,7 @@ const training = async (req, res) => {
       filename: "user.jpg",
       contentType: req.file.mimetype,
     });
+    formData.append("label", name);
 
     const response = await axios.post("http://0.0.0.0:5000/detect-face", formData, {
       headers: formData.getHeaders(),

@@ -285,36 +285,24 @@ const verifyFace = async (req, res) => {
 
 const compareFaces = async (req, res) => {
   try {
-    const { fileName, userId, time, date } = req.body;
-    console.log("fileName:", fileName);
+    const { userId, time, date } = req.body;
 
     if (!req.file) {
       return res.json({ message: "Không có file ảnh được gửi", code: "0" });
     }
 
-    if (fileName == null) {
-      return res.json({ message: "Vui lòng tải ảnh đại diện", code: "0" });
-    }
 
-    if (!fileName || !userId || !time || !date) {
+    if (!userId || !time || !date) {
       return res.json({ message: "Thiếu tham số trong request", code: "0" });
     }
 
-    // Bỏ dấu "/" ở đầu nếu có
-    const relativePath = fileName.startsWith("/")
-      ? fileName.slice(1)
-      : fileName;
-    const serverImagePath = path.join(__dirname, "..", relativePath);
-
-    console.log(serverImagePath);
-
     // Gửi dữ liệu sang Flask
     const formData = new FormData();
-    formData.append("image1", req.file.buffer, {
+    formData.append("image", req.file.buffer, {
       filename: "user.jpg",
       contentType: req.file.mimetype,
     });
-    formData.append("image2", fs.createReadStream(serverImagePath));
+    formData.append("label", userId);
 
     const response = await axios.post(
       "http://0.0.0.0:5000/compare-faces",
