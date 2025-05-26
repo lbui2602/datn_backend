@@ -291,7 +291,6 @@ const compareFaces = async (req, res) => {
       return res.json({ message: "Không có file ảnh được gửi", code: "0" });
     }
 
-
     if (!userId || !time || !date) {
       return res.json({ message: "Thiếu tham số trong request", code: "0" });
     }
@@ -311,6 +310,15 @@ const compareFaces = async (req, res) => {
         headers: formData.getHeaders(),
       }
     );
+
+    const error = response.data?.hi;
+
+    if (error) {
+      return res.json({
+        message: error,
+        code: "0",
+      });
+    }
 
     const matched = response.data?.matched;
 
