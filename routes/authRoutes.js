@@ -16,7 +16,8 @@ const {
   acceptUser,
   searchByName,
   registerAdmin,
-  deleteUser
+  deleteUser,
+  resetPassword
 } = require('../controllers/authController');
 const upload = require('../middleware/uploadAvatarMiddleware');
 const { protect } = require('../middleware/authMiddleware');
@@ -30,6 +31,7 @@ router.get('/getProfile', protect(), getProfile);
 router.get('/getUserInfo', protect(), getUserInfo);
 router.put('/update', protect(), updateUser);
 router.put('/change-password', protect(), changePassword);
+router.put('/reset-password', protect(), resetPassword);
 router.post('/check-password', protect(), checkPassword);
 router.get('/staff/:idDepartment', protect(), getListUserByDepartmentID);
 router.get('/search', protect(), searchByName);
