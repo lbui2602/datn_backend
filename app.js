@@ -7,6 +7,7 @@ const departmentRoutes = require('./routes/departmentRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const workingDayRoutes = require('./routes/workingDayRoutes');
 const roleRoutes = require('./routes/roleRoutes');
+const mailRoutes = require('./routes/mailRoutes');
 
 // Routes face
 const faceRoutes = require('./routes/faceRoutes');
@@ -112,6 +113,7 @@ app.use('/api/working-days', workingDayRoutes);
 app.use('/api/roles', roleRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/messages", messageRoutes);
+app.use('/api/mail', mailRoutes);
 require("./socket/socketHandler")(io);
 
 // Routes face

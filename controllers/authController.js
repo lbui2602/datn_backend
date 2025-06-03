@@ -213,6 +213,27 @@ const changePassword = async (req, res) => {
   }
 };
 
+const updatePassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user)
+      return res.json({ message: "Không tìm thấy người dùng!", code: "0" });
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.updateOne(
+      { _id: user.id },
+      { $set: { password: hashedPassword } }
+    );
+
+    res.json({ message: "Thay đổi mật khẩu thành công", code: "1" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server error: " + error.message, code: "0" });
+  }
+};
+
 const resetPassword = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -234,6 +255,7 @@ const resetPassword = async (req, res) => {
       .json({ message: "Server error: " + error.message, code: "0" });
   }
 };
+
 
 // Kiểm tra mật khẩu
 const checkPassword = async (req, res) => {
@@ -568,5 +590,6 @@ module.exports = {
   searchByName,
   registerAdmin,
   deleteUser,
-  resetPassword
+  resetPassword,
+  updatePassword
 };
